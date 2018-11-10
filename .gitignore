@@ -1,0 +1,11 @@
+/Frames
+/Photos
+/Videos
+/venv
+/instance
+*.mp4
+*.jpg
+*.png
+*.zip
+.idea
+test.py
