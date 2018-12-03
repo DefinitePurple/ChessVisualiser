@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Chess Visualiser{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chessboard.css') }}">
+  <style>
+    .card:hover {
+      cursor: pointer;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div id="matches-container" class="container-fluid  mt-4 text-center">
+    <div class="row mb-4">
+      <div class="d-flex col-2 justify-content-center">
+        <form class="card game-card" style="width: 80%;">
+          <div class="p-2">
+            <div id="board1" style="width: 100%;"></div>
+          </div>
+          <div class="card-body">
+            <p class="card-text">1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 Bb4 5. Nxe5 ...</p>
+            <a href="{{ url_for('match.view_match', mid='3') }}" class="btn btn-primary">View</a>
+          </div>
+        </form>
+      </div>
+      <div class="d-flex col-2 justify-content-center">
+        <form class="card game-card" style="width: 80%;">
+          <div class="p-2">
+            <div id="board2" style="width: 100%;"></div>
+          </div>
+          <div class="card-body">
+            <p class="card-text">1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 Bb4 5. Nxe5 ...</p>
+            <a href="{{ url_for('match.view_match', mid='3') }}" class="btn btn-primary">View</a>
+          </div>
+        </form>
+      </div>
+      <div class="d-flex col-2 justify-content-center">
+        <form class="card game-card" style="width: 80%;">
+          <div class="p-2">
+            <div id="board3" style="width: 100%;"></div>
+          </div>
+          <div class="card-body">
+            <p class="card-text">1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 Bb4 5. Nxe5 ...</p>
+            <a href="{{ url_for('match.view_match', mid='3') }}" class="btn btn-primary">View</a>
+          </div>
+        </form>
+      </div>
+      <div class="d-flex col-2 justify-content-center">
+        <form class="card game-card" style="width: 80%;">
+          <div class="p-2">
+            <div id="board4" style="width: 100%;"></div>
+          </div>
+          <div class="card-body">
+            <p class="card-text">1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 Bb4 5. Nxe5 ...</p>
+            <a href="{{ url_for('match.view_match', mid='3') }}" class="btn btn-primary">View</a>
+          </div>
+        </form>
+      </div>
+      <div class="d-flex col-2 justify-content-center">
+        <form class="card game-card" style="width: 80%;">
+          <div class="p-2">
+            <div id="board5" style="width: 100%;"></div>
+          </div>
+          <div class="card-body">
+            <p class="card-text">1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 Bb4 5. Nxe5 ...</p>
+            <a href="{{ url_for('match.view_match', mid='3') }}" class="btn btn-primary">View</a>
+          </div>
+        </form>
+      </div>
+      <div class="d-flex col-2 justify-content-center">
+        <form class="card game-card" style="width: 80%;">
+          <div class="p-2">
+            <div id="board6" style="width: 100%;"></div>
+          </div>
+          <div class="card-body">
+            <p class="card-text">1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 Bb4 5. Nxe5 ...</p>
+            <a href="{{ url_for('match.view_match', mid='3') }}" class="btn btn-primary">View</a>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="row mb-4">
+      <div class="d-flex col-2 justify-content-center">
+        <form class="card game-card" style="width: 80%;">
+          <div class="p-2">
+            <div id="board7" style="width: 100%;"></div>
+          </div>
+          <div class="card-body">
+            <p class="card-text">1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 Bb4 5. Nxe5 ...</p>
+            <a href="{{ url_for('match.view_match', mid='3') }}" class="btn btn-primary">View</a>
+          </div>
+        </form>
+      </div>
+      <div class="d-flex col-2 justify-content-center">
+        <form class="card game-card" style="width: 80%;">
+          <div class="p-2">
+            <div id="board8" style="width: 100%;"></div>
+          </div>
+          <div class="card-body">
+            <p class="card-text">1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 Bb4 5. Nxe5 ...</p>
+            <a href="{{ url_for('match.view_match', mid='3') }}" class="btn btn-primary">View</a>
+          </div>
+        </form>
+      </div>
+      <div class="d-flex col-2 justify-content-center">
+        <form class="card game-card" style="width: 80%;">
+          <div class="p-2">
+            <div id="board9" style="width: 100%;"></div>
+          </div>
+          <div class="card-body">
+            <p class="card-text">1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 Bb4 5. Nxe5 ...</p>
+            <a href="{{ url_for('match.view_match', mid='3') }}" class="btn btn-primary">View</a>
+          </div>
+        </form>
+      </div>
+      <div class="d-flex col-2 justify-content-center">
+        <form class="card game-card" style="width: 80%;">
+          <div class="p-2">
+            <div id="board10" style="width: 100%;"></div>
+          </div>
+          <div class="card-body">
+            <p class="card-text">1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 Bb4 5. Nxe5 ...</p>
+            <a href="{{ url_for('match.view_match', mid='3') }}" class="btn btn-primary">View</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block script %}
+  <script src="{{ url_for('static', filename='js/chessboard.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/matches.js') }}"></script>
+{% endblock %}

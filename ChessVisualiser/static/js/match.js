@@ -37,7 +37,6 @@ $(document).ready(function() {
             board.move(move);
         });
     });
-
     const moveDetails = getMoveDetails(moves, startingPosition);
     displayDetails(moveDetails);
 });
@@ -48,7 +47,6 @@ function displayDetails(details) {
            createRow(detail.moveCount);
 
         let el = 'div#row-'+ detail.moveCount;
-        console.log($(el).find('span#' + detail.colour));
         $(el).find('span#' + detail.colour).html(detail.pgn);
     });
 }
@@ -90,7 +88,6 @@ function getMoveDetails(moves, boardState) {
         boardState[move[3] - 1][mapFile(move[2])] = piece
 
     }
-    console.log(list);
     return list;
 }
 
