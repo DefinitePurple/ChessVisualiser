@@ -8,4 +8,5 @@
 *.png
 *.zip
 .idea
-test.py
+__pycache__/
+*.py[cod]
