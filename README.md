@@ -1,7 +1,7 @@
 # ChessVisualiser
 
 File structure breakdown
-root \n/
+root /
     | ChessVisualiser /
           | static /
                 | css /
