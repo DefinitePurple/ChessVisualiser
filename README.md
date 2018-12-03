@@ -2,9 +2,9 @@
 
 File structure breakdown<br />
 root /<br />
-    | ChessVisualiser /<br />
-          | static /<br />
-                | css /<br />
+- ChessVisualiser /<br />
+-- static /<br />
+---css /<br />
                       | chessboard.css - http://chessboardjs.com/<br />
                       | chessboard.min.css - http://chessboardjs.com/<br />
                       | style.css - created by Daniel Fitzpatrick<br />
