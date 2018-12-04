@@ -71,7 +71,7 @@ def createDataset():
         img = cv2.imread(addr)
         img = cv2.resize(img, (101, 101), interpolation=cv2.INTER_CUBIC)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        f["train_img"][i, ...] = img[None]
+        f["train_img"][i, ...] = img
 
     f.close()
 
