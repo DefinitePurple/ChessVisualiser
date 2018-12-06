@@ -4,7 +4,6 @@
 /venv
 /instance
 *.mp4
-*.png
 *.zip
 .idea
 __pycache__/
