@@ -1,7 +1,11 @@
 # Chess Visualiser
-## Webserver
 The webserver prototype was created under the guidance of Flask's own tutorial
 http://flask.pocoo.org/docs/1.0/tutorial/
+## Requirements
+Python 3.6.7 <br />
+`py -3 -m pip install --upgrade pip`<br />
+`py -3 -m pip install -r requirements.txt`
+
 ## How to use
 `git clone https://github.com/DefinitePurple/ChessVisualiser.git`<br />
 `cd ChessVisualiser`

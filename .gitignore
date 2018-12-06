@@ -3,7 +3,6 @@
 /Videos
 /venv
 /instance
-*.mp4
 *.zip
 .idea
 __pycache__/

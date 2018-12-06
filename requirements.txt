@@ -1,0 +1,6 @@
+flask
+keras
+tensorflow
+matplotlib
+tqdm
+opencv-python
