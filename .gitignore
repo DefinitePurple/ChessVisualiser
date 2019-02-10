@@ -1,8 +1,7 @@
-/Data
 /venv
 /instance
 *.zip
 .idea
 __pycache__/
 *.py[cod]
-/ChessGames
+/Data
