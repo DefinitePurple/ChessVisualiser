@@ -20,9 +20,9 @@ for img_path in imgs:
 
     for i in range(0, 600):
         for j in range(0, 600):
-            color = list(resized[i][j])
+            color = resized[i][j]
             print(color)
-            if color is [0,0,0]:
+            if list(resized[i][j]) is [0, 0, 0]:
                 print('next')
             break
         break
