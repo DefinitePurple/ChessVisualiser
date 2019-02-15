@@ -1,32 +1,37 @@
 import cv2
-import os
+import numpy as np
 from matplotlib import pyplot as plt
-import glob
+import math
+from matplotlib import image as image
+import easygui  # pip install easygui
 
-DATA_DIR = '../Data'
-IMAGES_DIR = '/Images'
-imgs = os.listdir(DATA_DIR + IMAGES_DIR)
-imgs = [k for k in imgs if 'masks' in k and '.jpg' in k and '~' not in k]
 
-height = width = 600
-dim = (width, height)
+def getMask(lower, upper, img):
+    lower = np.array(lower)
+    upper = np.array(upper)
+    return cv2.inRange(img, lower, upper)
 
-for img_path in imgs:
-    full_path = DATA_DIR + IMAGES_DIR + '/' + img_path
-    print(full_path)
-    img = cv2.imread(full_path)
 
-    resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+# Read image
+source = cv2.imread('test.jpg')
 
-    for i in range(0, 600):
-        for j in range(0, 600):
-            color = resized[i][j]
-            print(color)
-            if list(resized[i][j]) is [0, 0, 0]:
-                print('next')
-            break
-        break
+source = cv2.cvtColor(source, cv2.COLOR_BGR2RGB)  # Convert source to RGB, down with BGR!
 
-    plt.imshow(resized)
-    plt.show()
-    # cv2.imwrite(DATA_DIR + IMAGES_DIR + '/COPY-' + img, resized)
+red_mask = getMask([210, 0, 0], [255, 40, 40], source)
+blue_mask = getMask([0, 0, 210], [40, 40, 255], source)
+green_mask = getMask([0, 210, 0], [40, 255, 40], source)
+ROI = red_mask + blue_mask + green_mask
+
+black_mask = getMask([0, 0, 0], [30, 30, 30], source)
+
+output = source.copy()  # Copy the source image
+output[np.where(red_mask != 0)] = (0, 0, 255)
+output[np.where(green_mask != 0)] = (0, 255, 0)
+output[np.where(blue_mask != 0)] = (255, 0, 0)
+output[np.where(black_mask != 0)] = (0, 0, 0)
+
+cv2.imwrite('test_cleaned.jpg', output)
+
+plt.imshow(black_mask)
+plt.show()
+

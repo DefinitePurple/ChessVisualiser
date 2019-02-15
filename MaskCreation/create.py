@@ -1,5 +1,5 @@
 """
-    NOTE: DANIEL FITZPATRICK C15345046 IS NOT THE AUTHOR OF THIS CODE.
+    NOTE: DANIEL FITZPATRICK C15345046 IS NOT THE AUTHOR OF THE MAJORITY OF THIS CODE.
     IT HAS BEEN SOURCED FROM http://www.immersivelimit.com/tutorials/create-coco-annotations-from-scratch/
 """
 
@@ -8,7 +8,8 @@ import numpy as np  # (pip install numpy)
 from skimage import measure  # (pip install scikit-image)
 from shapely.geometry import Polygon, MultiPolygon  # (pip install Shapely)
 import json
-
+import cv2
+from matplotlib import pyplot as plt
 
 def create_sub_masks(mask_image):
     width, height = mask_image.size
@@ -81,10 +82,37 @@ def create_sub_mask_annotation(sub_mask, image_id, category_id, annotation_id, i
     return annotation
 
 
-chess_image_mask = Image.open('./white_bottom_starting_pos_mask.jpg')
+def getMask(lower, upper, img):
+    lower = np.array(lower)
+    upper = np.array(upper)
+    return cv2.inRange(img, lower, upper)
 
+
+# Read image
+source = cv2.imread('test.jpg')
+"""
+    THE FOLLOWING IS CREATED BY DANIEL FITZPATRICK AS A SOLUTION FOR IMPERFECTIONS IN JPG IMAGE FORMAT
+"""
+red_mask = getMask([210, 0, 0], [255, 40, 40], source)
+blue_mask = getMask([0, 0, 210], [40, 40, 255], source)
+green_mask = getMask([0, 210, 0], [40, 255, 40], source)
+ROI = red_mask + blue_mask + green_mask
+
+black_mask = getMask([0, 0, 0], [30, 30, 30], source)
+
+chess_image_mask = source.copy()  # Copy the source image
+chess_image_mask[np.where(red_mask != 0)] = (0, 0, 255)
+chess_image_mask[np.where(green_mask != 0)] = (0, 255, 0)
+chess_image_mask[np.where(blue_mask != 0)] = (255, 0, 0)
+chess_image_mask [np.where(black_mask != 0)] = (0, 0, 0)
+
+plt.imshow(chess_image_mask)
+plt.show()
+
+""" 
+    THE FOLLOWING HAS BEEN EDITED BY DANIEL FITZPATRICK IN ORDER TO REFLECT THE PROJECT REQUIREMENTS
+"""
 mask_images = [chess_image_mask]
-
 # Define which colors match which categories in the images
 black_piece_id, white_piece_id = [1, 2]
 category_ids = {
@@ -106,8 +134,6 @@ annotations = []
 for mask_image in mask_images:
     sub_masks = create_sub_masks(mask_image)
     for color, sub_mask in sub_masks.items():
-        print(image_id)
-        print(color)
         category_id = category_ids[image_id][color]
         annotation = create_sub_mask_annotation(sub_mask, image_id, category_id, annotation_id, is_crowd)
         annotations.append(annotation)
