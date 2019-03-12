@@ -1,0 +1,9 @@
+item {
+  id: 1
+  name: 'chess_white'
+}
+
+item {
+  id: 2
+  name: 'chess_black'
+}

@@ -1,7 +1,0 @@
-DROP TABLE IF EXISTS user;
-
-CREATE TABLE user (
-  id VARCHAR(40) PRIMARY KEY,
-  username TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL
-);
