@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Chess Visualiser{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chessboard.css') }}">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+  <script>
+      let match = {{ match|safe }};
+      const moves = match.moves;
+      console.log(match);
+      let startingPosition = [
+        ['R','N','B','Q','K','B','N','R'],
+        ['P','P','P','P','P','P','P','P'],
+        [ 0, 0, 0, 0, 0, 0, 0, 0],
+        [ 0, 0, 0, 0, 0, 0, 0, 0],
+        [ 0, 0, 0, 0, 0, 0, 0, 0],
+        [ 0, 0, 0, 0, 0, 0, 0, 0],
+        ['p','p','p','p','p','p','p','p'],
+        ['r','n','b','q','k','b','n','r']
+    ];
+    </script>
+{% endblock %}
+
+{% block content %}
+  <div id="game-container" class="container-fluid  mt-4 text-center">
+    <div id="board" style="display: inline-block; margin-right: 5vw;"></div>
+    <div id="side-bar" class="rounded bg-dark text-white p-2" style="">
+      <div id="vertical-moves" class="bg-dark container-flex" style="">
+      </div>
+      <div id='control-buttons' class="btn-group">
+        <button id='reset' type="button" class="btn btn-dark btn-lg"><i class="fas fa-chevron-left"></i></button>
+        <button id='previous' type="button" class="btn btn-dark btn-lg"><i class="fas fa-angle-left"></i></button>
+        <button id='next' type="button" class="btn btn-dark btn-lg"><i class="fas fa-angle-right"></i></button>
+        <button id='last' type="button" class="btn btn-dark btn-lg"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block script %}
+  <script src="{{ url_for('static', filename='js/chessboard.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/match.js') }}"></script>
+{% endblock %}
