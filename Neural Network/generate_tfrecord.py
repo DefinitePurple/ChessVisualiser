@@ -28,30 +28,19 @@ FLAGS = flags.FLAGS
 
 # TO-DO replace this with label map
 def class_text_to_int(row_label):
-    if row_label == 'chess_white_rook':
+    print(row_label)
+    if row_label == 'chess_rook':
         return 1
-    elif row_label == 'chess_white_knight':
+    elif row_label == 'chess_knight':
         return 2
-    elif row_label == 'chess_white_bishop':
+    elif row_label == 'chess_bishop':
         return 3
-    elif row_label == 'chess_white_king':
+    elif row_label == 'chess_king':
         return 4
-    elif row_label == 'chess_white_queen':
+    elif row_label == 'chess_queen':
         return 5
-    elif row_label == 'chess_white_pawn':
+    elif row_label == 'chess_pawn':
         return 6
-    elif row_label == 'chess_black_rook':
-        return 7
-    elif row_label == 'chess_black_knight':
-        return 8
-    elif row_label == 'chess_black_bishop':
-        return 9
-    elif row_label == 'chess_black_king':
-        return 10
-    elif row_label == 'chess_black_queen':
-        return 11
-    elif row_label == 'chess_black_pawn':
-        return 12
     else:
         None
 
@@ -119,4 +108,3 @@ def main(_):
 
 if __name__ == '__main__':
     tf.app.run()
-    print('YAAAAAAAAAAAAAAAAAAAAs')
