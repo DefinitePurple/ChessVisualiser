@@ -1,0 +1,7 @@
+Hi {username},
+
+Your account has been created and you can now use our service
+
+Regards,
+The ChessVisualiser Team
+www.chessvisualiser.com

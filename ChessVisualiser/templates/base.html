@@ -20,6 +20,7 @@
         <ul class="navbar-nav mr-auto">
           <li class="nav-item"><a class="nav-link" href="{{ url_for('match.upload') }}">Upload Match</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('match.view_matches', username=g.user['username']) }}">View Matches</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('match.uploads', username=g.user['username']) }}">View Uploads</a></li>
         </ul>
         <ul class="navbar-nav">
           <a class="nav-item nav-link" href="#">{{ g.user['username'] }}</a>
@@ -27,8 +28,8 @@
         </ul>
       {% else %}
         <div class="navbar-nav ml-auto">
-          <a class="nav-item nav-link" href="{{ url_for('auth.register') }}">Register</a>
           <a class="nav-item nav-link" href="{{ url_for('auth.login') }}">Log In</a>
+          <a class="nav-item nav-link" href="{{ url_for('auth.register') }}">Register</a>
         </div>
 
       {% endif %}

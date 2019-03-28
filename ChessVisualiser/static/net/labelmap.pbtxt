@@ -1,0 +1,29 @@
+item {
+  id: 1
+  name: 'chess_rook'
+}
+
+item {
+  id: 2
+  name: 'chess_knight'
+}
+
+item {
+  id: 3
+  name: 'chess_bishop'
+}
+
+item {
+  id: 4
+  name: 'chess_king'
+}
+
+item {
+  id: 5
+  name: 'chess_queen'
+}
+
+item {
+  id: 6
+  name: 'chess_pawn'
+}

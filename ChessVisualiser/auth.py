@@ -1,13 +1,8 @@
+import threading
 import functools
-import re
-import string
-import random
-from datetime import datetime
-
 from flask import (Blueprint, flash, g, redirect, render_template, request, session, url_for)
-from sqlalchemy import create_engine
-from werkzeug.security import check_password_hash
-import ChessVisualiser.db_auth as db
+import ChessVisualiser.db_user as db
+import ChessVisualiser.emailHandler as emailer
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -32,6 +27,10 @@ def register():
             error = 'Email {} is already in use'.format(email)
 
         if error is None:
+            thread = threading.Thread(target=emailer.sendEmail,
+                                      kwargs={'which': 'register', 'receiver': email,
+                                              'replace': {'username': username}})
+            thread.start()
             db.registerUser(email, username, password)
             return redirect(url_for('auth.login'))
 

@@ -33,10 +33,7 @@ class Match(Base):
     moves = Column(String)
     url = Column(String)
     file = Column(String)
-    date = Column(Date)
-
-
-
+    date = Column(String)
 
     def __repr__(self):
         return "<Match(" \

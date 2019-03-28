@@ -19,7 +19,7 @@ create table Match(
   moves character varying,
   file character varying,
   url character varying,
-  date date
+  date character varying
 );
 
 

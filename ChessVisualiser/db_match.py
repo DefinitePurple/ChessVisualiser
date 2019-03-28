@@ -1,21 +1,29 @@
-from sqlalchemy import func
 from .db_setup import Session
 from .models import Match
-
+import datetime
 
 def initMatch(data):
-    print(data)
+    now = datetime.datetime.now()
+    date = "{}-{}-{}".format(now.day, now.month, now.year)
 
     match = Match(file=data['path'],
                   white=data['white'],
                   black=data['black'],
                   url=data['host'],
                   score=data['score'],
-                  user_id=data['userId'])
+                  user_id=data['userId'],
+                  date=date)
+
     Session.add(match)
     Session.commit()
     Session.flush()
 
     return match.id
+
+
+def getMatchesByUser(account):
+    query = Session.query(Match).filter(Match.user_id == account)
+    return query.all()
+
 
 
