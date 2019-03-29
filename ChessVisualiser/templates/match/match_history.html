@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Chess Visualiser{% endblock %}
+
+{% block head %}
+  <style>
+    .card:hover {
+      cursor: pointer;
+    }
+  </style>
+  <script type=text/javascript>
+    let uploads = JSON.parse({{ data|tojson }});
+    console.log(uploads)
+  </script>
+{% endblock %}
+
+{% block content %}
+  <div id="matches-container" class="container-fluid  mt-4 text-center">
+    {% for row in data %}
+      <div class="row mb-4" id="matches-row">
+        {% for col in row  %}
+          <div class="d-flex col-2 justify-content-center">
+            <form class="card game-card"
+                  style="width: 80%"
+                  action="{{ url_for('match.images') }}"
+                  method="get" enctype="multipart/form-data">
+              <input type="hidden" id="mid" name="mid" value="{{ col.id }}">
+              <div class="card-body">
+                <pre class="card-text">
+ID: {{ col.id }}
+White: {{ col.white }}
+Black: {{ col.black }}
+Score: {{ col.score }}
+Upload Date: {{ col.date }}
+                </pre>
+                <input type="submit" value="View" class="btn btn-primary">
+              </div>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  
+  </div>
+{% endblock %}
+
+{% block script %}
+  <script src="{{ url_for('static', filename='js/uploads.js') }}"></script>
+{% endblock %}

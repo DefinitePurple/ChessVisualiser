@@ -20,7 +20,7 @@
         <ul class="navbar-nav mr-auto">
           <li class="nav-item"><a class="nav-link" href="{{ url_for('match.upload') }}">Upload Match</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('match.view_matches', username=g.user['username']) }}">View Matches</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('match.uploads', username=g.user['username']) }}">View Uploads</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('match.history', username=g.user['username']) }}">Image History</a></li>
         </ul>
         <ul class="navbar-nav">
           <a class="nav-item nav-link" href="#">{{ g.user['username'] }}</a>

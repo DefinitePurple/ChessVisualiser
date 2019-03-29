@@ -13,9 +13,6 @@
 {% block content %}
   <div id="upload-container" class="container-fluid  mt-4 d-flex justify-content-center">
     <div class="card" style="width: 40rem;">
-      <div class="p-2">
-        <div id="board1" style="width: 100%;"></div>
-      </div>
       <div class="card-body">
         <form class="custom-file" action="{{ url_for('match.upload') }}" method="post" enctype="multipart/form-data">
           <div class="form-group row ">

@@ -4,14 +4,21 @@
 
 {% block head %}
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
-  <script>
-      let files = {{ files|safe }};
-      console.log(files)
-
-    </script>
 {% endblock %}
 
 {% block content %}
+  <div id="matches-container" class="container-fluid  mt-4 text-center">
+    {% for row in data %}
+      <div class="row mb-4" id="matches-row">
+        {% for col in row  %}
+          <div class="d-flex col-3 justify-content-center">
+            <img src="{{ path }}{{ col }}"/>
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+  </div>
 {% endblock %}
 
 {% block script %}

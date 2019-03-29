@@ -16,9 +16,7 @@ import ChessVisualiser.emailHandler as emailer
 
 def getContours(img):
     _, cnt, _ = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    if len(cnt) <= 0:
-        print('Could not find any contours')
-        exit()
+
     return cnt
 
 
@@ -206,7 +204,7 @@ def getOrientation(img, corners):
 def beginVideoProcessing(VIDEO_PATH, OUT_PATH, user):
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     start = time.time()
-    print('Starting processing')
+
     NET_PATH = os.path.dirname(os.path.realpath(__file__))
     NET_PATH = os.path.join(NET_PATH, 'static')
     NET_PATH = os.path.join(NET_PATH, 'net')
@@ -256,8 +254,6 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, user):
     # The divisor is the number of frames that will be grabbed in 1 second
     framesToGrab = math.floor(fps / 2)
 
-    print('Starting first frame')
-    corners_mids = []
     rectangle = None
     while rectangle is None:
         # Read frame
@@ -282,7 +278,6 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, user):
 
         cap.set(cv2.CAP_PROP_POS_FRAMES, pos_frame - 1)
 
-    print('Starting video')
     while True:
         # Read in frame
         flag, frame = cap.read()
@@ -317,7 +312,6 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, user):
                     line_thickness=2,
                     min_score_thresh=0.01,
                     max_boxes_to_draw=50)
-                print(pos_frame)
                 cv2.imwrite("{}/{}.jpg".format(OUT_PATH, pos_frame), cropped)
 
                 # cv2.imshow("frame", cropped)
@@ -334,12 +328,11 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, user):
         if cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT):
             # If the current frame is final frame, stop
             break
-    print('Finishing')
+
     # print("Frames to keep {}".format(framesToKeepPos))
     cap.release()
     end = time.time()
     print("It took {} seconds to process this video".format(end - start))
-    print(user['email'], user['username'])
     emailer.sendEmail('processed', user['email'], {'username': user['username']})
 
 # beginVideoProcessing("./static/users/1/videos/24/20190323145923.mp4")

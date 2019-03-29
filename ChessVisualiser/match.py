@@ -3,8 +3,8 @@ import json
 import threading
 import datetime
 import ChessVisualiser.service_match as match_service
-
-from flask import (Blueprint, g, render_template, request, flash)
+import pprint
+from flask import (Blueprint, g, render_template, request, flash, redirect, url_for)
 from ChessVisualiser.auth import login_required
 import ChessVisualiser.db_match as match_db
 
@@ -37,40 +37,54 @@ def view_matches(username):
     return render_template('match/matches.html', matches=json.dumps(data))
 
 
-# @bp.route('/<mid>')
-# @login_required
-# def view_match(mid):
-#     match = {
-#         'id': mid,
-#         'moves': ['c2-c4', 'e7-e5', 'b1-c3', 'g8-f6', 'g1-f3', 'b8-c6', 'g2-g3', 'f8-b4', 'f3-e5'],
-#         'date': '25/12/2018'
-#     }
-#     return render_template('match/match.html', match=json.dumps(match))
-
-
-@bp.route('/uploads')
+@bp.route('/<mid>')
 @login_required
-def uploads():
+def view_match(mid):
+    match = {
+        'id': mid,
+        'moves': ['c2-c4', 'e7-e5', 'b1-c3', 'g8-f6', 'g1-f3', 'b8-c6', 'g2-g3', 'f8-b4', 'f3-e5'],
+        'date': '25/12/2018'
+    }
+    return render_template('match/match.html', match=json.dumps(match))
+
+
+@bp.route('/history')
+@login_required
+def history():
     resp = match_db.getMatchesByUser(g.user.id)
-    data = []
+    uploads = []
     for upload in resp:
-        data.append({
+        uploads.append({
             'id': upload.id,
             'white': upload.white,
             'black': upload.black,
             'score': upload.score,
             'date': upload.date
         })
+    data = list(chunks(uploads, 6))
 
-    return render_template('match/uploads.html', data=json.dumps(data))
+    return render_template('match/match_history.html', data=data)
 
 
-@bp.route('/upload/<mid>')
+@bp.route('/images')
 @login_required
-def view_upload():
-    print(mid.mid)
-    files = os.listdir('./ChessVisualiser/static/users/' + str(g.user.id) + '/images/' + mid)
-    return render_template('match/uploaded.html', files=files)
+def images():
+    mid = request.args['mid']
+    path = os.path.join(APP_ROOT, 'static')
+    path = os.path.join(path, 'users')
+    path = os.path.join(path, str(g.user.id))
+    path = os.path.join(path, 'images')
+    path = os.path.join(path, mid)
+
+    if os.path.exists(path):
+        files = os.listdir(path)
+        if len(files) > 0:
+            data = list(chunks(files, 4))
+            path = path.split('ChessVisualiser')[2]
+            return render_template('match/match_image.html', path=path+'/', data=data)
+
+    flash('Images could not be found')
+    return redirect(url_for('match.history'))
 
 
 @bp.route('/upload', methods=('GET', 'POST'))
@@ -88,7 +102,7 @@ def upload():
             flash(u'File is corrupt')
         else:
             name = file.filename
-            if name[len(name)-4:] != '.mp4':
+            if name[len(name) - 4:] != '.mp4':
                 flash(u'Incorrect file format. Convert video to .mp4')
             else:
                 # Setup the following directories:
@@ -156,3 +170,8 @@ def upload():
                 flash(u'Video has been uploaded. You will be emailed when the processing has completed', 'error')
 
         return render_template('match/upload.html')
+
+
+def chunks(l, n):
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
