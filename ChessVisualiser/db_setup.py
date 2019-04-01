@@ -9,6 +9,5 @@ db = create_engine(db_string)
 Session = scoped_session(sessionmaker(bind=db))
 
 
-
 def cleanup(obj):
     Session.remove()

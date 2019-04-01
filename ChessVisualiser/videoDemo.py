@@ -1,22 +1,22 @@
 import math
-import time
 import os
-import tensorflow as tf
-import sys
+import shutil
+import time
+
+import PIL.Image as Image
+import PIL.ImageDraw as ImageDraw
 import cv2
 import numpy as np
-import PIL.ImageDraw as ImageDraw
-import PIL.Image as Image
-
+import tensorflow as tf
 # Import utilites
-from ChessVisualiser.utils import label_map_util
-from ChessVisualiser.utils import visualization_utils as vis_util
-import ChessVisualiser.emailHandler as emailer
+from utils_demo import label_map_util
+from utils_demo import visualization_utils
 
 
 def getContours(img):
     _, cnt, _ = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
+    if len(cnt) <= 0:
+        exit()
     return cnt
 
 
@@ -33,28 +33,26 @@ def crop(_frame):
 
 
 def doCrop(_frame, rectangle):
-    boundary = 50
-    # Set the corners
     height, width, channel = _frame.shape
-    topLeftX = rectangle[0] - boundary
-    topLeftY = rectangle[1] - boundary
-    bottomRightX = rectangle[0] + rectangle[2] + boundary
-    bottomRightY = rectangle[1] + rectangle[3] + boundary
 
-    if topLeftX < 0:
-        topLeftX = 0
+    boundary = math.ceil((width * 0.01 + height * 0.01) / 2)
 
-    if topLeftY < 0:
-        topLeftY = 0
+    left = rectangle[0] - boundary
+    top = rectangle[1] - boundary
+    right = rectangle[0] + rectangle[2] + boundary
+    bottom = rectangle[1] + rectangle[3] + boundary
 
-    if bottomRightX > width:
-        bottomRightX = width
+    if left < 0:
+        left = 0
+    if top < 0:
+        top = 0
+    if right > width:
+        right = width
+    if bottom > height:
+        bottom = height
 
-    if bottomRightY > height:
-        bottomRightY = height
-
-    topLeft = (topLeftX, topLeftY)
-    bottomRight = (bottomRightX, bottomRightY)
+    topLeft = (left, top)
+    bottomRight = (right, bottom)
 
     # Crop around the rectangle
     cropped = _frame[topLeft[1]: bottomRight[1], topLeft[0]: bottomRight[0]].copy()
@@ -172,7 +170,7 @@ def getCorners(im_width, im_height, boxes):
     return [topLeftClosest[0], topRightClosest[0], botRightClosest[0], botLeftClosest[0]]
 
 
-def drawCircle(img, point, radius=5, color=(255, 0, 0)):
+def drawCircle(img, point, color=(255, 0, 0), radius=5):
     x = point[0]
     y = point[1]
     image_pil = Image.fromarray(np.uint8(img)).convert('RGB')
@@ -181,27 +179,87 @@ def drawCircle(img, point, radius=5, color=(255, 0, 0)):
     np.copyto(img, np.array(image_pil))
 
 
-def drawLine(img, line, color=(255, 0, 0)):
+def drawLine(img, line, color=(255, 0, 0), size=3):
     image_pil = Image.fromarray(np.uint8(img)).convert('RGB')
     draw = ImageDraw.Draw(image_pil)
-    draw.line(line, color, 3)
+    draw.line(line, color, size)
     np.copyto(img, np.array(image_pil))
 
 
-def getOrientation(img, corners):
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    orientation = []
-    for corner in corners:
-        pixel = gray[corner[1] - 1:corner[1], corner[0] - 1: corner[0]][0]
-        dist = 255 - pixel
-        if dist < pixel:
-            orientation.append(1)
-        else:
-            orientation.append(0)
-    return orientation
+# DONT USE, Only rotate the array dont need to care about image
+def rotate(img, orientation):
+    if orientation == [0, 1, 1, 0]:
+        return cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+    elif orientation == [1, 0, 0, 1]:
+        return cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    elif orientation == [1, 1, 0, 0]:
+        return cv2.rotate(img, cv2.ROTATE_180)
 
 
-def beginVideoProcessing(VIDEO_PATH, OUT_PATH, user):
+def perpDistFromLine(line, point):
+    b = point
+    a = line[0]
+    c = line[1]
+
+    ab = distance(a, b)  # left line point to point
+    ca = distance(a, c)  # the line distance
+    cb = distance(c, b)  # right line point to point
+
+    top = (cb ** 2) + (ca ** 2) - (ab ** 2)
+    bot = 2 * ca * cb
+
+    alpha = math.acos(top / bot)
+    yeeta = math.radians(90)
+    right = cb / math.sin(yeeta)
+    left = math.sin(alpha)
+
+    return left * right
+
+
+def sortVeritcally(list, midpoints):
+    for passnum in range(len(list) - 1, 0, -1):
+        for i in range(passnum):
+            p1 = midpoints[list[i]][1]
+            p2 = midpoints[list[i + 1]][1]
+            if p1 > p2:
+                temp = list[i]
+                list[i] = list[i + 1]
+                list[i + 1] = temp
+
+    return list
+
+
+def sortHorizontally(list, midpoints):
+    for passnum in range(len(list) - 1, 0, -1):
+        for i in range(passnum):
+            p1 = midpoints[list[i]][0]
+            p2 = midpoints[list[i + 1]][0]
+            if p1 > p2:
+                temp = list[i]
+                list[i] = list[i + 1]
+                list[i + 1] = temp
+
+    return list
+
+
+def line_intersection(line1, line2):
+    xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
+    ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1])
+
+    def det(a, b):
+        return a[0] * b[1] - a[1] * b[0]
+
+    div = det(xdiff, ydiff)
+    if div == 0:
+        raise Exception('lines do not intersect')
+
+    d = (det(*line1), det(*line2))
+    x = det(d, xdiff) / div
+    y = det(d, ydiff) / div
+    return x, y
+
+
+def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     start = time.time()
 
@@ -244,12 +302,16 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, user):
 
     # Number of objects detected
     num_detections = detection_graph.get_tensor_by_name('num_detections:0')
+    end = time.time()
+    print("It took {} seconds to init tf".format(end - start))
 
     # Get video
     cap = cv2.VideoCapture(VIDEO_PATH)
     # Get frame_spacing for video
     frame_spacing = cap.get(cv2.CAP_PROP_FPS)
+    frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
+    start = time.time()
     rectangle = None
     while rectangle is None:
         # Read frame
@@ -264,63 +326,71 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, user):
         # Set frame back to first frame
         cap.set(cv2.CAP_PROP_POS_FRAMES, pos_frame - 1)
         if rectangle is not None:
-            cap.set(cv2.CAP_PROP_POS_FRAMES, int(frame_spacing/4))
+            cap.set(cv2.CAP_PROP_POS_FRAMES, int(frame_spacing / 4))
+    end = time.time()
+    print("It took {} seconds to process first frame".format(end - start))
 
+    start = time.time()
     while True:
         # Read in frame
         flag, frame = cap.read()
         # Get frame position
         pos_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
-        # Check if we're at a position to grab a frame
-        if pos_frame % framesToGrab == math.floor(framesToGrab / 2):
-            # Check if frame is ready
-            if flag:
-                # frame = cv2.resize(frame, None, fx=0.3, fy=0.3, interpolation=cv2.INTER_AREA)
-                # Crop the frame to the rectangle
-                cropped = doCrop(frame, rectangle)
+        # Check if frame is ready
+        if flag:
+            # frame = cv2.resize(frame, None, fx=0.3, fy=0.3, interpolation=cv2.INTER_AREA)
+            # Crop the frame to the rectangle
+            cropped = doCrop(frame, rectangle)
 
-                image_expanded = np.expand_dims(cropped, axis=0)
-                # Perform the actual detection by running the model with the image as input
+            image_expanded = np.expand_dims(cropped, axis=0)
+            # Perform the actual detection by running the model with the image as input
 
-                (boxes, scores, classes, num) = sess.run(
-                    [detection_boxes, detection_scores, detection_classes, num_detections],
-                    feed_dict={image_tensor: image_expanded})
+            (boxes, scores, classes, num) = sess.run(
+                [detection_boxes, detection_scores, detection_classes, num_detections],
+                feed_dict={image_tensor: image_expanded})
 
-                # boxes, classes, scores = doFilter(cropped, 20, boxes, classes, scores)
+            boxes, classes, scores = doFilter(cropped, 20, boxes, classes, scores)
 
-                # Draw the results of the detection (aka 'visulaize the results')
-                vis_util.visualize_boxes_and_labels_on_image_array(
-                    cropped,
-                    np.squeeze(boxes),
-                    np.squeeze(classes).astype(np.int32),
-                    np.squeeze(scores),
-                    category_index,
-                    use_normalized_coordinates=True,
-                    line_thickness=2,
-                    min_score_thresh=0.01,
-                    max_boxes_to_draw=50)
-                cv2.imwrite("{}/{}.jpg".format(OUT_PATH, pos_frame), cropped)
-            else:
-                # The next frame is not ready, so we try to read it again
-                cap.set(cv2.CAP_PROP_POS_FRAMES, pos_frame - 1)
-                # It is better to wait for a while for the next frame to be ready
-                cv2.waitKey(1000)
+            # Draw the results of the detection (aka 'visulaize the results')
+            visualization_utils.visualize_boxes_and_labels_on_image_array(
+                cropped,
+                np.squeeze(boxes),
+                np.squeeze(classes).astype(np.int32),
+                np.squeeze(scores),
+                category_index,
+                use_normalized_coordinates=True,
+                line_thickness=2,
+                min_score_thresh=0.01,
+                max_boxes_to_draw=50)
+            cv2.imwrite("{}/{}.jpg".format(OUT_PATH, pos_frame), cropped)
+        else:
+            # The next frame is not ready, so we try to read it again
+            cap.set(cv2.CAP_PROP_POS_FRAMES, pos_frame - 1)
+            # It is better to wait for a while for the next frame to be ready
+            cv2.waitKey(1000)
 
-        if cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT):
+        if cap.get(cv2.CAP_PROP_POS_FRAMES) == frame_count:
             # If the current frame is final frame, stop
             break
 
         if flag:
             next_frame = pos_frame + frame_spacing
-            if next_frame > cap.get(cv2.CAP_PROP_FRAME_COUNT):
-                next_frame = cap.get(cv2.CAP_PROP_FRAME_COUNT) - 1
-    
+            if next_frame > frame_count:
+                next_frame = frame_count - 1
+
             cap.set(cv2.CAP_PROP_POS_FRAMES, next_frame)
 
-    # print("Frames to keep {}".format(framesToKeepPos))
     cap.release()
     end = time.time()
     print("It took {} seconds to process this video".format(end - start))
-    emailer.sendEmail('processed', user['email'], {'username': user['username']})
 
-# beginVideoProcessing("./static/users/1/videos/24/20190323145923.mp4")
+
+if os.path.exists('./static/test'):
+    print(len(os.listdir('./static/test')))
+    shutil.rmtree('./static/test')
+    os.mkdir('./static/test')
+
+if not os.path.exists('./static/test'):
+    os.mkdir('./static/test')
+
+beginVideoProcessing("./static/net/input/1-converted.mp4", "./static/test")

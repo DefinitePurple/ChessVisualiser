@@ -258,6 +258,30 @@ def line_intersection(line1, line2):
     return x, y
 
 
+def horizontalOrVertical(orientation):
+    if orientation == [1, 0, 0, 1] or orientation == [0, 1, 1, 0]:
+        return 0  # Vertical
+    elif orientation == [0, 0, 1, 1] or orientation == [1, 1, 0, 0]:
+        return 1  # Horizontal
+    else:
+        return -1  # Error
+
+
+# Returns position in corners_mids array of which corner is 'a1'
+# Starts clockwise from top left
+def whereIsA1(orientation):
+    if orientation == [1, 0, 0, 1]:
+        return 0  # Top Left
+    elif orientation == [1, 1, 0, 0]:
+        return 1  # Top Right
+    elif orientation == [0, 1, 1, 0]:
+        return 2  # Bottom Right
+    elif orientation == [0, 0, 1, 1]:
+        return 3  # Bottom Left
+    else:
+        return -1
+
+
 def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     start = time.time()
@@ -302,6 +326,8 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     num_detections = detection_graph.get_tensor_by_name('num_detections:0')
 
     img = cv2.imread(VIDEO_PATH)
+    for i in range(0, 2):
+        img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
     rectangle = crop(img)
     cropped = doCrop(img, rectangle)
 
@@ -372,7 +398,6 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
             orientation.append(1)
         else:
             orientation.append(0)
-
 
     top_points = []
     right_points = []
@@ -451,9 +476,13 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     avg_line_distance = 0
     counter = 0
 
-    for i in range(0, len(horizontal) - 1):
-        l1 = horizontal[i]
-        l2 = horizontal[i + 1]
+    if horizontalOrVertical(orientation) == 1:
+        checker = horizontal
+    else:
+        checker = vertical
+    for i in range(0, len(checker) - 1):
+        l1 = checker[i]
+        l2 = checker[i + 1]
         p1 = l1[0]
         p2 = l2[0]
         dist = distance(p1, p2)
@@ -463,8 +492,63 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
         dist += distance(p1, p2)
         dist /= 2
         avg_line_distance += dist
-        counter += 1
+        counter += 2
     avg_line_distance /= counter
+    avg_line_distance *= 0.9
+
+    guess_img = cropped.copy()
+    if horizontalOrVertical(orientation) == 1:
+        line = horizontal[1]
+        line2 = horizontal[2]
+
+        p1 = (line[0][0], line[0][1] + avg_line_distance)
+        p2 = (line[1][0], line[1][1] + avg_line_distance)
+        p3 = (line2[0][0], line2[0][1] - avg_line_distance)
+        p4 = (line2[1][0], line2[1][1] - avg_line_distance)
+
+        avg_line_distance *= 0.9
+        p5 = (p1[0], p1[1] + avg_line_distance)
+        p6 = (p2[0], p2[1] + avg_line_distance)
+        p7 = (p3[0], p3[1] - avg_line_distance)
+        p8 = (p4[0], p4[1] - avg_line_distance)
+    else:
+        line = vertical[1]
+        line2 = vertical[2]
+
+        p1 = (line[0][0] + avg_line_distance, line[0][1])
+        p2 = (line[1][0] + avg_line_distance, line[1][1])
+        p3 = (line2[0][0] - avg_line_distance, line2[0][1])
+        p4 = (line2[1][0] - avg_line_distance, line2[1][1])
+
+        avg_line_distance *= 0.9
+        p5 = (p1[0] + avg_line_distance, p1[1])
+        p6 = (p2[0] + avg_line_distance, p2[1])
+        p7 = (p3[0] - avg_line_distance, p3[1])
+        p8 = (p4[0] - avg_line_distance, p4[1])
+
+    new_line = [p1, p2]
+    new_line2 = [p3, p4]
+    new_line3 = [p5, p6]
+    new_line4 = [p7, p8]
+
+    drawLine(guess_img, line)
+    drawLine(guess_img, line2)
+    drawLine(guess_img, new_line)
+    drawLine(guess_img, new_line2)
+    drawLine(guess_img, new_line3)
+    drawLine(guess_img, new_line4)
+
+    if horizontalOrVertical(orientation) == 1:
+        horizontal.append(new_line)
+        horizontal.append(new_line2)
+        horizontal.append(new_line3)
+        horizontal.append(new_line4)
+    else:
+        vertical.append(new_line)
+        vertical.append(new_line2)
+        vertical.append(new_line3)
+        vertical.append(new_line4)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'guess_lines'), guess_img)
 
     fixed_lines_img = cropped.copy()
     for i in range(len(vertical)):
@@ -491,6 +575,21 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
 
     cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'lines_fixed'), fixed_lines_img)
 
+    intersections = []
+    for h in horizontal:
+        for v in vertical:
+            intersections.append(line_intersection(h, v))
+
+    int_img = cropped.copy()
+    for p in intersections:
+        drawCircle(int_img, p)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'intersections'), int_img)
+
+
+    corner_test_img = cropped.copy()
+    corner = corners_mids[whereIsA1(orientation)]
+    drawCircle(corner_test_img, corner)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'corner_test'), corner_test_img)
     # Check the colors of each corner piece
     # Find all pieces closest to bottom
     # Find all pieces closest to the top
@@ -498,7 +597,6 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     # Find all pieces closest to right
     # Create lines connecting each piece
     # Find pieces positions from each line by checking their verticality and horizontalness
-
 
     # drawCircle(cropped, (top, left), 10, (255, 0, 0))
 

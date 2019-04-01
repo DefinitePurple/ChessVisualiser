@@ -16,6 +16,8 @@ def getUserBy(account):
         elif key == 'id':
             query = query.filter(Users.id == account[key])
 
+    Session.query(Users).filter(func.lower(Users.username) == func.lower(account[key]))
+
     return query.first()
 
 
