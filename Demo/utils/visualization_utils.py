@@ -34,7 +34,7 @@ import six
 import tensorflow as tf
 
 from core import standard_fields as fields
-from utils_demo import shape_utils
+from utils import shape_utils
 
 _TITLE_LEFT_MARGIN = 10
 _TITLE_TOP_MARGIN = 10

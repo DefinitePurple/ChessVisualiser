@@ -14,4 +14,4 @@ ChessVisualiser/static/users/*
 ChessVisualiser/static/net/output/*
 ChessVisualiser/static/net/input/*
 ChessVisualiser/static/test/*
-*.pb
+frozen_inference_graph.pb

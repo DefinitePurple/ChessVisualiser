@@ -19,7 +19,6 @@
       {% if g.user %}
         <ul class="navbar-nav mr-auto">
           <li class="nav-item"><a class="nav-link" href="{{ url_for('match.upload') }}">Upload Match</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('match.view_matches', username=g.user['username']) }}">View Matches</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('match.history', username=g.user['username']) }}">Image History</a></li>
         </ul>
         <ul class="navbar-nav">

@@ -1,17 +1,17 @@
 import math
-import time
 import os
-import tensorflow as tf
-import sys
+import time
+
+import PIL.Image as Image
+import PIL.ImageDraw as ImageDraw
 import cv2
 import numpy as np
-import PIL.ImageDraw as ImageDraw
-import PIL.Image as Image
+import tensorflow as tf
 
+import ChessVisualiser.emailHandler as emailer
 # Import utilites
 from ChessVisualiser.utils import label_map_util
 from ChessVisualiser.utils import visualization_utils as vis_util
-import ChessVisualiser.emailHandler as emailer
 
 
 def getContours(img):
@@ -201,7 +201,8 @@ def getOrientation(img, corners):
     return orientation
 
 
-def beginVideoProcessing(VIDEO_PATH, OUT_PATH, user):
+def beginVideoProcessing(PATH, user):
+    VIDEO_PATH = os.path.join(PATH, 'input.mp4')
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     start = time.time()
 
@@ -248,7 +249,7 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, user):
     # Get video
     cap = cv2.VideoCapture(VIDEO_PATH)
     # Get frame_spacing for video
-    frame_spacing = cap.get(cv2.CAP_PROP_FPS)
+    frame_spacing = cap.get(cv2.CAP_PROP_FPS) / 2
 
     rectangle = None
     while rectangle is None:
@@ -264,7 +265,11 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, user):
         # Set frame back to first frame
         cap.set(cv2.CAP_PROP_POS_FRAMES, pos_frame - 1)
         if rectangle is not None:
-            cap.set(cv2.CAP_PROP_POS_FRAMES, int(frame_spacing/4))
+            cap.set(cv2.CAP_PROP_POS_FRAMES, int(frame_spacing / 4))
+
+    frame = doCrop(frame, rectangle)
+    height, width, _ = frame.shape
+    video = cv2.VideoWriter(PATH + '/processed.mp4', 0x7634706d, 30, (width, height))
 
     while True:
         # Read in frame
@@ -272,39 +277,41 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, user):
         # Get frame position
         pos_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
         # Check if we're at a position to grab a frame
-        if pos_frame % framesToGrab == math.floor(framesToGrab / 2):
-            # Check if frame is ready
-            if flag:
-                # frame = cv2.resize(frame, None, fx=0.3, fy=0.3, interpolation=cv2.INTER_AREA)
-                # Crop the frame to the rectangle
-                cropped = doCrop(frame, rectangle)
+        # Check if frame is ready
+        if flag:
+            # frame = cv2.resize(frame, None, fx=0.3, fy=0.3, interpolation=cv2.INTER_AREA)
+            # Crop the frame to the rectangle
+            cropped = doCrop(frame, rectangle)
 
-                image_expanded = np.expand_dims(cropped, axis=0)
-                # Perform the actual detection by running the model with the image as input
+            image_expanded = np.expand_dims(cropped, axis=0)
+            # Perform the actual detection by running the model with the image as input
 
-                (boxes, scores, classes, num) = sess.run(
-                    [detection_boxes, detection_scores, detection_classes, num_detections],
-                    feed_dict={image_tensor: image_expanded})
+            (boxes, scores, classes, num) = sess.run(
+                [detection_boxes, detection_scores, detection_classes, num_detections],
+                feed_dict={image_tensor: image_expanded})
 
-                # boxes, classes, scores = doFilter(cropped, 20, boxes, classes, scores)
+            boxes, classes, scores = doFilter(cropped, 20, boxes, classes, scores)
 
-                # Draw the results of the detection (aka 'visulaize the results')
-                vis_util.visualize_boxes_and_labels_on_image_array(
-                    cropped,
-                    np.squeeze(boxes),
-                    np.squeeze(classes).astype(np.int32),
-                    np.squeeze(scores),
-                    category_index,
-                    use_normalized_coordinates=True,
-                    line_thickness=2,
-                    min_score_thresh=0.01,
-                    max_boxes_to_draw=50)
-                cv2.imwrite("{}/{}.jpg".format(OUT_PATH, pos_frame), cropped)
-            else:
-                # The next frame is not ready, so we try to read it again
-                cap.set(cv2.CAP_PROP_POS_FRAMES, pos_frame - 1)
-                # It is better to wait for a while for the next frame to be ready
-                cv2.waitKey(1000)
+            # Draw the results of the detection (aka 'visulaize the results')
+            vis_util.visualize_boxes_and_labels_on_image_array(
+                cropped,
+                np.squeeze(boxes),
+                np.squeeze(classes).astype(np.int32),
+                np.squeeze(scores),
+                category_index,
+                use_normalized_coordinates=True,
+                line_thickness=2,
+                min_score_thresh=0.01,
+                max_boxes_to_draw=50)
+            # cv2.imwrite("{}/{}.jpg".format(PATH, int(pos_frame)), cropped)
+            for i in range(int(10)):
+                video.write(cropped)
+
+        else:
+            # The next frame is not ready, so we try to read it again
+            cap.set(cv2.CAP_PROP_POS_FRAMES, pos_frame - 1)
+            # It is better to wait for a while for the next frame to be ready
+            cv2.waitKey(1000)
 
         if cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT):
             # If the current frame is final frame, stop
@@ -314,11 +321,12 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, user):
             next_frame = pos_frame + frame_spacing
             if next_frame > cap.get(cv2.CAP_PROP_FRAME_COUNT):
                 next_frame = cap.get(cv2.CAP_PROP_FRAME_COUNT) - 1
-    
+
             cap.set(cv2.CAP_PROP_POS_FRAMES, next_frame)
 
     # print("Frames to keep {}".format(framesToKeepPos))
     cap.release()
+    video.release()
     end = time.time()
     print("It took {} seconds to process this video".format(end - start))
     emailer.sendEmail('processed', user['email'], {'username': user['username']})
