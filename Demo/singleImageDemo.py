@@ -214,19 +214,6 @@ def perpDistFromLine(line, point):
     return left * right
 
 
-# def sort(list, midpoints, reverse=False):
-#     for passnum in range(len(list) - 1, 0, -1):
-#         for i in range(passnum):
-#             p1 = midpoints[list[i]][1]
-#             p2 = midpoints[list[i + 1]][1]
-#             if p1 > p2:
-#                 temp = list[i]
-#                 list[i] = list[i + 1]
-#                 list[i + 1] = temp
-#
-#     return list
-
-
 def bubbleSort(list, midpoints, reverse=False, axis=0):
     for passnum in range(len(list) - 1, 0, -1):
         for i in range(passnum):
@@ -243,7 +230,7 @@ def bubbleSort(list, midpoints, reverse=False, axis=0):
     return list
 
 
-def bubbleSortLines(list, reverse=False, axis=0):
+def bubbleSortLines(list, reverse=False):
     for passnum in range(len(list) - 1, 0, -1):
         for i in range(passnum):
             line1 = list[i]
@@ -320,7 +307,9 @@ def getOrientation(img, corners, boxes):
     counter = 0
     height, width, _ = rgb.shape
     for mid in getMiddles(width, height, boxes):
-        pixel = list(rgb[mid[1] - 1:mid[1], mid[0] - 1: mid[0]][0][0])
+        midY = int(mid[1])
+        midX = int(mid[0])
+        pixel = list(rgb[midY - 1:midY, midX - 1: midX][0][0])
         avg_luminance += 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2]
         counter += 1
     avg_luminance /= counter
@@ -338,6 +327,8 @@ def getOrientation(img, corners, boxes):
 
 
 def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
+    if not os.path.exists(OUT_PATH):
+        os.makedirs(OUT_PATH)
     """
     INITLISATION
     Initialise all tensorflow paths and attributes
@@ -385,8 +376,8 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     num_detections = detection_graph.get_tensor_by_name('num_detections:0')
 
     img = cv2.imread(VIDEO_PATH)
-    # for i in range(0, 3):
-    img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+    # for i in range(rotato):
+    #     img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
     rectangle = crop(img)
     cropped = doCrop(img, rectangle)
     cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'cropped'), cropped)
@@ -635,12 +626,12 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     new_line4 = [p7, p8]
 
     # Draw each new line
-    drawLine(guess_img, line)
-    drawLine(guess_img, line2)
-    drawLine(guess_img, new_line)
-    drawLine(guess_img, new_line2)
-    drawLine(guess_img, new_line3)
-    drawLine(guess_img, new_line4)
+    drawLine(guess_img, line, (0, 255, 0), 5)
+    drawLine(guess_img, line2, (0, 255, 0), 5)
+    drawLine(guess_img, new_line, (0, 255, 0), 5)
+    drawLine(guess_img, new_line2, (0, 255, 0), 5)
+    drawLine(guess_img, new_line3, (0, 255, 0), 5)
+    drawLine(guess_img, new_line4, (0, 255, 0), 5)
 
     # Append the lines to the corresponding array depending on board orientation
     if horizontalOrVertical(orientation) == 1:
@@ -694,20 +685,20 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     sorted_lines_horizontal = []
     sorted_lines_vertical = []
     if a1 == 0:
-        sorted_lines_horizontal = bubbleSortLines(horizontal)
-        sorted_lines_vertical = bubbleSortLines(vertical, False, 1)
+        sorted_lines_horizontal = bubbleSortLines(horizontal, False)
+        sorted_lines_vertical = bubbleSortLines(vertical, False)
     # If a1 is in the top right
     elif a1 == 1:
-        sorted_lines_horizontal = bubbleSortLines(horizontal, False)
-        sorted_lines_vertical = bubbleSortLines(vertical, True, 1)
+        sorted_lines_horizontal = bubbleSortLines(vertical, True)
+        sorted_lines_vertical = bubbleSortLines(horizontal, False)
     # If a1 is in the bottom right
     elif a1 == 2:
         sorted_lines_horizontal = bubbleSortLines(horizontal, True)
-        sorted_lines_vertical = bubbleSortLines(vertical, True, 1)
+        sorted_lines_vertical = bubbleSortLines(vertical, True)
     # If a1 is in the bottom left
     elif a1 == 3:
         sorted_lines_horizontal = bubbleSortLines(vertical, False)
-        sorted_lines_vertical = bubbleSortLines(horizontal, True, 1)
+        sorted_lines_vertical = bubbleSortLines(horizontal, True)
 
     int_img = cropped.copy()
     intersections = []
@@ -718,12 +709,13 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
             point = line_intersection(h, v)
             intersections.append(point)
             row.append(point)
-            drawCircle(int_img, point)
+            drawCircle(int_img, point, (0, 255, 0))
         board.append(row)
     cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'intersections'), int_img)
 
     int_map_img = cropped.copy()
     # a = 0, b = 1, c = 2, d = 3, etc
+    board_pieces = []
     for i in range(len(board)):
         for j in range(len(board[i])):
             if j == 0:
@@ -744,12 +736,41 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
                 square = "h"
 
             square += str(i + 1)
-            drawText(int_map_img, board[j][i], square, (255, 255, 255), 45)
-    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'intersections_mapped'), int_map_img)
+            # if square == 'a1':
+
+            drawText(int_map_img, board[j][i], square, (0, 255, 0), 45)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'intersections_mapped_' + str(a1)), int_map_img)
+
+    board_pieces = []
+    row = ['R', 'P', '-', '-', '-', '-', 'p', 'r']
+    board_pieces.append(row)
+    row = ['N', 'P', '-', '-', '-', '-', 'p', 'n']
+    board_pieces.append(row)
+    row = ['B', 'P', '-', '-', '-', '-', 'p', 'b']
+    board_pieces.append(row)
+    row = ['Q', 'P', '-', '-', '-', '-', 'p', 'q']
+    board_pieces.append(row)
+    row = ['K', 'P', '-', '-', '-', '-', 'p', 'k']
+    board_pieces.append(row)
+    row = ['B', 'P', '-', '-', '-', '-', 'p', 'b']
+    board_pieces.append(row)
+    row = ['N', 'P', '-', '-', '-', '-', 'p', 'n']
+    board_pieces.append(row)
+    row = ['R', 'P', '-', '-', '-', '-', 'p', 'r']
+    board_pieces.append(row)
+
+    int_piece_img = cropped.copy()
+    # a = 0, b = 1, c = 2, d = 3, etc
+    for i in range(len(board)):
+        for j in range(len(board[i])):
+            drawText(int_piece_img, board[j][i], board_pieces[j][i], (0, 255, 100), 45)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'intersections_piece_' + str(a1)), int_piece_img)
 
     end = time.time()
     print("It took {} seconds to process this video".format(end - start))
-    print("It took {} seconds to process this video".format(end - start))
 
 
-beginVideoProcessing("./static/net/input/3.jpg", "./static/net/output")
+beginVideoProcessing("./static/net/input/1.jpg", "./static/net/output/1/")
+beginVideoProcessing("./static/net/input/2.jpg", "./static/net/output/2/")
+beginVideoProcessing("./static/net/input/3.jpg", "./static/net/output/3/")
+beginVideoProcessing("./static/net/input/4.jpg", "./static/net/output/4/")

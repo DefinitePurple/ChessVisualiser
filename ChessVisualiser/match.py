@@ -103,8 +103,7 @@ def upload():
                 file.save(destination)
 
                 thread = threading.Thread(target=match_service.startMatchProcessing,
-                                          kwargs={'matchId': matchId,
-                                                  'path': target,
+                                          kwargs={'path': target,
                                                   'userId': g.user.id})
                 thread.start()
 

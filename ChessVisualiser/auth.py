@@ -2,7 +2,7 @@ import threading
 import functools
 from flask import (Blueprint, flash, g, redirect, render_template, request, session, url_for)
 import ChessVisualiser.db_user as db
-import ChessVisualiser.emailHandler as emailer
+import ChessVisualiser.email_handler as emailer
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 

@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-import ChessVisualiser.emailHandler as emailer
+import ChessVisualiser.email_handler as emailer
 # Import utilites
 from ChessVisualiser.utils import label_map_util
 from ChessVisualiser.utils import visualization_utils as vis_util
@@ -303,7 +303,7 @@ def beginVideoProcessing(PATH, user):
                 line_thickness=2,
                 min_score_thresh=0.01,
                 max_boxes_to_draw=50)
-            # cv2.imwrite("{}/{}.jpg".format(PATH, int(pos_frame)), cropped)
+
             for i in range(int(10)):
                 video.write(cropped)
 
@@ -324,11 +324,8 @@ def beginVideoProcessing(PATH, user):
 
             cap.set(cv2.CAP_PROP_POS_FRAMES, next_frame)
 
-    # print("Frames to keep {}".format(framesToKeepPos))
     cap.release()
     video.release()
     end = time.time()
     print("It took {} seconds to process this video".format(end - start))
     emailer.sendEmail('processed', user['email'], {'username': user['username']})
-
-# beginVideoProcessing("./static/users/1/videos/24/20190323145923.mp4")

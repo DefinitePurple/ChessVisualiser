@@ -1,6 +1,5 @@
 import math
 import os
-import random
 import time
 
 import PIL.Image as Image
@@ -34,7 +33,7 @@ def crop(_frame):
 
 
 def doCrop(_frame, rectangle):
-    height, width, channel = _frame.shape
+    height, width, _ = _frame.shape
 
     boundary = math.ceil((width * 0.01 + height * 0.01) / 2)
 
@@ -66,20 +65,20 @@ def checkPointInRec(topLeft, bottomRight, point):
     return False
 
 
-def getMiddles(im_width, im_height, boxes):
+def getMiddles(width, height, boxes):
     midpoints = []
     for box in boxes:
         ymin, xmin, ymax, xmax = box
-        midpoint = ((xmin * im_width + xmax * im_width) / 2, (ymin * im_height + ymax * im_height) / 2)
+        midpoint = (int((xmin * width + xmax * width) / 2), int((ymin * height + ymax * height) / 2))
         midpoints.append(midpoint)
         # cv2.circle(cropped, midpoint, 10, (0, 0, 255), -1)
 
     return midpoints
 
 
-def getMiddle(im_width, im_height, box):
+def getMiddle(width, height, box):
     ymin, xmin, ymax, xmax = box
-    midpoint = ((xmin * im_width + xmax * im_width) / 2, (ymin * im_height + ymax * im_height) / 2)
+    midpoint = (int((xmin * width + xmax * width) / 2), int((ymin * height + ymax * height) / 2))
     return midpoint
 
 
@@ -89,7 +88,7 @@ def doFilter(cropped, threshold, boxes, classes, scores):
     squeezed_boxes = np.squeeze(boxes)
     squeezed_scores = np.squeeze(scores)
     squeezed_classes = np.squeeze(classes).astype(np.int32)
-    im_width, im_height, channel = cropped.shape
+    height, width, _ = cropped.shape
 
     # Find everything with a score of over the threshold
     for i in range(len(squeezed_scores)):
@@ -103,7 +102,7 @@ def doFilter(cropped, threshold, boxes, classes, scores):
     squeezed_classes = squeezed_classes[:keep]
 
     # Find the center of every bounding box
-    midpoints = getMiddles(im_width, im_height, squeezed_boxes)
+    midpoints = getMiddles(width, height, squeezed_boxes)
 
     # Find all the pieces that have a center inside another bounding box
     # Check if its score is less that the other ones
@@ -112,7 +111,7 @@ def doFilter(cropped, threshold, boxes, classes, scores):
     for i in range(len(squeezed_boxes)):
         box = squeezed_boxes[i]
         ymin, xmin, ymax, xmax = box
-        (left, right, top, bottom) = (xmin * im_width, xmax * im_width, ymin * im_height, ymax * im_height)
+        (left, right, top, bottom) = (xmin * width, xmax * width, ymin * height, ymax * height)
         for j in range(len(midpoints)):
             if i is not j:
                 point = midpoints[j]
@@ -141,21 +140,21 @@ def distance(p1, p2=(0, 0)):
     return math.sqrt(((p1[0] - p2[0]) ** 2) + ((p1[1] - p2[1]) ** 2))
 
 
-def getCorners(im_width, im_height, boxes):
+def getCorners(width, height, boxes):
     topLeftP = (0, 0)
-    topRightP = (im_width, 0)
-    botRightP = (im_width, im_height)
-    botLeftP = (0, im_height)
+    topRightP = (width, 0)
+    botRightP = (width, height)
+    botLeftP = (0, height)
 
     # (Position in array, distance from respective points)
-    topLeftClosest = (-1, im_height * 10)
-    topRightClosest = (-1, im_height * 10)
-    botRightClosest = (-1, im_height * 10)
-    botLeftClosest = (-1, im_height * 10)
+    topLeftClosest = (-1, height * 10)
+    topRightClosest = (-1, height * 10)
+    botRightClosest = (-1, height * 10)
+    botLeftClosest = (-1, height * 10)
 
     for i in range(len(boxes)):
         box = boxes[i]
-        midpoint = getMiddle(im_width, im_height, box)
+        midpoint = getMiddle(width, height, box)
         if distance(midpoint, topLeftP) < topLeftClosest[1]:
             topLeftClosest = (i, distance(midpoint, topLeftP))
 
@@ -171,10 +170,10 @@ def getCorners(im_width, im_height, boxes):
     return [topLeftClosest[0], topRightClosest[0], botRightClosest[0], botLeftClosest[0]]
 
 
-def drawText(img, point, message, fill=(0, 0, 0)):
+def drawText(img, point, message, fill=(0, 0, 0), size=40):
     image_pil = Image.fromarray(np.uint8(img)).convert('RGB')
     d = ImageDraw.Draw(image_pil)
-    font = Font.truetype(font="arial.ttf", size=40)
+    font = Font.truetype(font="arial.ttf", size=size)
     d.text(point, message, font=font, fill=fill)
     np.copyto(img, np.array(image_pil))
 
@@ -215,19 +214,6 @@ def perpDistFromLine(line, point):
     return left * right
 
 
-# def sort(list, midpoints, reverse=False):
-#     for passnum in range(len(list) - 1, 0, -1):
-#         for i in range(passnum):
-#             p1 = midpoints[list[i]][1]
-#             p2 = midpoints[list[i + 1]][1]
-#             if p1 > p2:
-#                 temp = list[i]
-#                 list[i] = list[i + 1]
-#                 list[i + 1] = temp
-#
-#     return list
-
-
 def bubbleSort(list, midpoints, reverse=False, axis=0):
     for passnum in range(len(list) - 1, 0, -1):
         for i in range(passnum):
@@ -244,7 +230,7 @@ def bubbleSort(list, midpoints, reverse=False, axis=0):
     return list
 
 
-def bubbleSortLines(list, reverse=False, axis=0):
+def bubbleSortLines(list, reverse=False):
     for passnum in range(len(list) - 1, 0, -1):
         for i in range(passnum):
             line1 = list[i]
@@ -285,29 +271,6 @@ def line_intersection(line1, line2):
     return x, y
 
 
-def getOrientation(img, corners, boxes):
-    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    avg_luminance = 0
-    counter = 0
-    im_width, im_height, _ = rgb.shape
-    for mid in getMiddles(im_width, im_height, boxes):
-        pixel = list(rgb[mid[1] - 1:mid[1], mid[0] - 1: mid[0]][0][0])
-        avg_luminance += 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2]
-        counter += 1
-    avg_luminance /= counter
-
-    orientation = []
-    for corner in corners:
-        pixel = list(rgb[corner[1] - 1:corner[1], corner[0] - 1: corner[0]][0][0])
-        Y = 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2]
-        if Y >= avg_luminance:
-            orientation.append(1)
-        else:
-            orientation.append(0)
-
-    return orientation
-
-
 def horizontalOrVertical(orientation):
     if orientation == [1, 0, 0, 1] or orientation == [0, 1, 1, 0]:
         return 0  # Vertical
@@ -332,6 +295,43 @@ def whereIsA1(orientation):
         return -1
 
 
+def getAvgLuminance(img, boxes):
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    avg_luminance = 0
+    counter = 0
+    height, width, _ = rgb.shape
+    for mid in getMiddles(width, height, boxes):
+        midY = int(mid[1])
+        midX = int(mid[0])
+        pixel = list(rgb[midY - 1:midY, midX - 1: midX][0][0])
+        avg_luminance += 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2]
+        counter += 1
+    avg_luminance /= counter
+
+    return avg_luminance
+
+
+def getPieceColor(img, current, avg_luminance):
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    curY = int(current[1])
+    curX = int(current[0])
+    pixel = list(rgb[curY - 1:curY, curX - 1: curX][0][0])
+    cur_luminance = 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2]
+    return 1 if cur_luminance >= avg_luminance else 0
+
+
+def getOrientation(img, corners, boxes):
+    avg_luminance = getAvgLuminance(img, boxes)
+    orientation = []
+    for corner in corners:
+        color = getPieceColor(img, corner, avg_luminance)
+        orientation.append(color)
+
+    return orientation
+
+
+# ONLY USED WHEN READING IN THE IMAGE SEQUENES
+# Sort a list of files by their name
 def sortFiles(files, reverse=False):
     for passnum in range(len(files) - 1, 0, -1):
         for i in range(passnum):
@@ -350,6 +350,23 @@ def sortFiles(files, reverse=False):
     return files
 
 
+# Outputs a multidimensional array that mimics the board state and where pieces are but not what pieces are
+# ? indicates a piece, - indicates an empty square
+def convertToBoardMapping(diction):
+    temp = []
+    for i in range(8):
+        row = []
+        for j in range(8):
+            row.append('-')
+        temp.append(row)
+
+    for p in diction:
+        temp[p[0]][p[1]] = '?'
+    return temp
+
+
+# Finds the square each piece mid point is closest to
+# Returns a list of array coordinates where the coordinates map back to a position in the board array
 def compareAgainstBoard(middles, board):
     diction = []
     for i in range(len(middles)):
@@ -364,46 +381,58 @@ def compareAgainstBoard(middles, board):
                     closest = dist
                     square = [row, col]
         diction.append(square)
-    print(diction)
     return diction
 
 
-def beyondFirstFrame(img, inputs, sess, category_index, image_tensor, board):
-    # Detect pieces
-    # Filter
-    # Get middles
-    # Check against the board
+# Receives the current board state acquired from convertToBoardMapping and the previous board state
+# This will keep track of piece movement. Converts '?' into actual pieces
+# The first 'previous' state will be the starting position which already tells us what pieces are
+def compareAgainstPreviousState(current, previous):
+    move = (0, 0)
+    for i in range(len(current)):
+        for j in range(len(current[i])):
+            cur = current[j][i]
+            prev = previous[j][i]
 
-    im_height, im_width, channels = img.shape
-    image_expanded = np.expand_dims(img, axis=0)
-    (boxes, scores, classes, num) = sess.run(
-        inputs,
-        feed_dict={image_tensor: image_expanded})
+            if prev is not '-' and cur is not '-':
+                current[j][i] = prev
+            elif prev is not '-' and cur is '-':
+                move = (j, i)
 
-    boxes, classes, scores = doFilter(img, 1, boxes, classes, scores)
-    labels_img = img.copy()
-    # visualization_utils.visualize_boxes_and_labels_on_image_array(
-    #     labels_img,
-    #     np.squeeze(boxes),
-    #     np.squeeze(classes).astype(np.int32),
-    #     np.squeeze(scores),
-    #     category_index,
-    #     use_normalized_coordinates=True,
-    #     line_thickness=3,
-    #     min_score_thresh=0.01,
-    #     max_boxes_to_draw=50)
-    # cv2.imshow('frame', labels_img)
-    # cv2.waitKey(100000)
-    middles = getMiddles(im_width, im_height, boxes)
-    diction = compareAgainstBoard(middles, board)
-    for p in diction:
-        point = board[p[0]][p[1]]
-        drawText(labels_img, point, str(p[0]) + str(p[1]))
-        drawCircle(labels_img, point)
-    cv2.imwrite("./static/net/output/sequence/{}.jpg".format('tellytubbies' + str(random.randint(0, 1000))), labels_img)
+    found = False
+    i = 0
+    while not found:
+        for j in range(len(current[i])):
+            cur = current[j][i]
+            prev = previous[move[0]][move[1]]
+            if cur is '?':
+                current[j][i] = prev
+                found = True
+                break
+        i += 1
+    return current
 
 
-def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
+def convertToFEN(state):
+    FEN = ""
+    for i in range(len(state) - 1, -1, -1):
+        counter = 0
+        for j in range(len(state[i])):
+            if state[j][i] is not '-':
+                if counter is not 0:
+                    FEN += str(counter)
+                    counter = 0
+                FEN += state[j][i]
+            else:
+                counter += 1
+        if counter is not 0:
+            FEN += str(counter)
+        if i is not 0:
+            FEN += '/'
+    return FEN
+
+
+def beginVideoProcessing(VIDEO_PATH, OUT_PATH, rotato):
     """
     INITLISATION
     Initialise all tensorflow paths and attributes
@@ -449,17 +478,21 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
 
     # Number of objects detected
     num_detections = detection_graph.get_tensor_by_name('num_detections:0')
+    if not os.path.exists(OUT_PATH):
+        os.makedirs(OUT_PATH)
 
-    files = os.listdir(VIDEO_PATH)
-    files = sortFiles(files, False)
+    files = sorted(os.listdir(VIDEO_PATH))
     path = VIDEO_PATH + files[0]
+    files.pop(0)
     img = cv2.imread(path)
+    for i in range(rotato):
+        img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
     rectangle = crop(img)
     cropped = doCrop(img, rectangle)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'cropped'), cropped)
 
-    test_lines = cropped.copy()
     image_expanded = np.expand_dims(cropped, axis=0)
-    im_width, im_height, channel = cropped.shape
+    height, width, _ = cropped.shape
 
     """
     DETECTION
@@ -474,12 +507,6 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
         inputs,
         feed_dict={image_tensor: image_expanded})
 
-    """
-    FILTER
-    Filter each bounding box to take the highest scoring of each overlapping box
-    If the center point of a box is inside another box but its score is smaller, remove it  
-    """
-    boxes, classes, scores = doFilter(cropped, 1, boxes, classes, scores)
     labels_img = cropped.copy()
     visualization_utils.visualize_boxes_and_labels_on_image_array(
         labels_img,
@@ -491,9 +518,17 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
         line_thickness=3,
         min_score_thresh=0.01,
         max_boxes_to_draw=50)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'labels'), labels_img)
 
+    """
+    FILTER
+    Filter each bounding box to take the highest scoring of each overlapping box
+    If the center point of a box is inside another box but its score is smaller, remove it  
+    """
+    boxes, classes, scores = doFilter(cropped, 20, boxes, classes, scores)
+    labels_filtered_img = cropped.copy()
     visualization_utils.visualize_boxes_and_labels_on_image_array(
-        test_lines,
+        labels_filtered_img,
         np.squeeze(boxes),
         np.squeeze(classes).astype(np.int32),
         np.squeeze(scores),
@@ -502,6 +537,18 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
         line_thickness=3,
         min_score_thresh=0.01,
         max_boxes_to_draw=50)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'labels_filtered'), labels_filtered_img)
+
+    """
+    MIDDLES - NOT NECESSARY
+    Get ALL the middle points from the boxes
+    Draw them onto the image 
+    """
+    middles = getMiddles(width, height, boxes)
+    middles_img = cropped.copy()
+    for mid in middles:
+        drawCircle(middles_img, mid, (0, 255, 0), 10)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'middles'), middles_img)
 
     """
     CORNERS
@@ -509,25 +556,27 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     Get the center point of each corner
     Append the center point to a list to hold the corner mid points    
     """
-    corners = getCorners(im_width, im_height, boxes)
+    corners = getCorners(width, height, boxes)
+    corner_img = cropped.copy()
     corners_mids = []
     for i in corners:
-        tmp = getMiddle(im_width, im_height, boxes[i])
-        drawCircle(test_lines, tmp, (0,0,0), 10)
+        tmp = getMiddle(width, height, boxes[i])
         corners_mids.append(tmp)
+        drawCircle(corner_img, tmp, (0, 255, 0), 10)
+
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'corners'), corner_img)
 
     """
     ORIENTATION
     Convert image to RGB
-    Get the luminance at the center of every piece and calculate the average luminance
-    Check if the luminance of each corner piece is higher or lower than the average
+    Get the center point of each corner piece
+    Check if the pixel at the center is closer to white or black
     White is 1
     Black is 0
     """
 
     orientation = getOrientation(cropped, corners_mids, boxes)
     a1 = whereIsA1(orientation)
-
     """
     EDGES
     Create lines between the corner points
@@ -551,9 +600,9 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     left_points.append(corners[0])
 
     # Get all the midpoints
-    midpoints = getMiddles(im_width, im_height, boxes)
+    midpoints = getMiddles(width, height, boxes)
     # This is the distance to compare against when checking the distance from a line
-    check = distance((0, 0), (im_width / 20, im_height / 20))
+    check = distance((0, 0), (width / 20, height / 20))
     for i in range(len(boxes)):
         if i not in corners:
             distTop = perpDistFromLine((corners_mids[0], corners_mids[1]), midpoints[i])
@@ -569,6 +618,18 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
             if distRight < check:
                 right_points.append(i)
 
+    # Draw a circle on each edge point
+    edge_img = cropped.copy()
+    for i in left_points:
+        drawCircle(edge_img, midpoints[i], (0, 255, 0), 10)
+    for i in right_points:
+        drawCircle(edge_img, midpoints[i], (0, 255, 0), 10)
+    for i in top_points:
+        drawCircle(edge_img, midpoints[i], (0, 255, 0), 10)
+    for i in bot_points:
+        drawCircle(edge_img, midpoints[i], (0, 255, 0), 10)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'edges'), edge_img)
+
     """
     LINES
     In order to figure out the approximate center point of each board square, 
@@ -581,11 +642,6 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     fill the any gaps that may occur. Find the intersection of each line and this gives an approximation 
     of each squares center point.
     """
-
-    middles = getMiddles(im_width, im_height, boxes)
-    for mid in middles:
-        print(mid)
-        drawCircle(test_lines, mid, (255, 255, 255), 20)
     # Sort the points ao that we can match piece to its corresponding piece on the other side of the board
     left_points = bubbleSort(left_points, midpoints, False, 1)
     right_points = bubbleSort(right_points, midpoints, False, 1)
@@ -595,9 +651,11 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     vertical = []
 
     # Create the horizontal lines
+    lines_img = cropped.copy()
     for i in range(len(left_points)):
         left_point = midpoints[left_points[i]]
         right_point = midpoints[right_points[i]]
+        drawLine(lines_img, [left_point, right_point], (0, 255, 0), 5)
         line = [left_point, right_point]
         horizontal.append(line)
 
@@ -605,8 +663,10 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     for i in range(len(top_points)):
         top_point = midpoints[top_points[i]]
         bot_point = midpoints[bot_points[i]]
+        drawLine(lines_img, [top_point, bot_point], (0, 255, 0), 5)
         line = [top_point, bot_point]
         vertical.append(line)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'lines'), lines_img)
 
     # Depending on the orientation of the board, we either want to fill in lines horizontally or vertically
     if horizontalOrVertical(orientation) == 1:
@@ -639,6 +699,7 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     avg_line_distance *= 0.9
 
     # Actually create the new lines from 'guessing'
+    guess_img = cropped.copy()
     if horizontalOrVertical(orientation) == 1:
         line = horizontal[1]
         line2 = horizontal[2]
@@ -673,51 +734,82 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
     new_line3 = [p5, p6]
     new_line4 = [p7, p8]
 
+    # Draw each new line
+    drawLine(guess_img, line, (0, 255, 0), 5)
+    drawLine(guess_img, line2, (0, 255, 0), 5)
+    drawLine(guess_img, new_line, (0, 255, 0), 5)
+    drawLine(guess_img, new_line2, (0, 255, 0), 5)
+    drawLine(guess_img, new_line3, (0, 255, 0), 5)
+    drawLine(guess_img, new_line4, (0, 255, 0), 5)
+
     # Append the lines to the corresponding array depending on board orientation
-    # if horizontalOrVertical(orientation) == 1:
-    #     horizontal.append(new_line)
-    #     horizontal.append(new_line2)
-    #     horizontal.append(new_line3)
-    #     horizontal.append(new_line4)
-    # else:
-    #     vertical.append(new_line)
-    #     vertical.append(new_line2)
-    #     vertical.append(new_line3)
-    #     vertical.append(new_line4)
+    if horizontalOrVertical(orientation) == 1:
+        horizontal.append(new_line)
+        horizontal.append(new_line2)
+        horizontal.append(new_line3)
+        horizontal.append(new_line4)
+    else:
+        vertical.append(new_line)
+        vertical.append(new_line2)
+        vertical.append(new_line3)
+        vertical.append(new_line4)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'guess_lines'), guess_img)
 
     # Stretch each line each line by finding the point they intersect with the edge of the board
+    fixed_lines_img = cropped.copy()
     for i in range(len(vertical)):
-        line = [(0, 0), (im_width, 0)]
+        line = [(0, 0), (width, 0)]
         start_point = line_intersection(line, vertical[i])
-        line = [(0, im_height), (im_width, im_height)]
+        line = [(0, height), (width, height)]
         end_point = line_intersection(line, vertical[i])
         act_vertical.append([start_point, end_point])
 
     for i in range(len(horizontal)):
-        line = [(0, 0), (0, im_height)]
+        line = [(0, 0), (0, height)]
         start_point = line_intersection(line, horizontal[i])
-        line = [(im_width, 0), (im_width, im_height)]
+        line = [(width, 0), (width, height)]
         end_point = line_intersection(line, horizontal[i])
         act_horizontal.append([start_point, end_point])
 
+    # Draw the new lines
+    for i in range(len(act_vertical)):
+        line = act_vertical[i]
+        drawLine(fixed_lines_img, line, (0, 255, 0), 5)
+    for i in range(len(act_horizontal)):
+        line = act_horizontal[i]
+        drawLine(fixed_lines_img, line, (0, 255, 0), 5)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'lines_fixed'), fixed_lines_img)
+
+    """
+    INTERSECTIONS
+    In order to find the center of each square, we find the intersection of every single line
+    The best way to do this is to sort the lines by where A1 is. IE: Is it in top left or bottom right
+
+    Once its sorted correctly, we can just iterate through the horizontal lines, 
+    getting the intersection point with each of the vertical lines, and that will give us each row of square centers
+    """
+
     # Sort the lines according to where a1 is
     # If a1 is in the top left
+    sorted_lines_horizontal = []
+    sorted_lines_vertical = []
     if a1 == 0:
-        sorted_lines_horizontal = bubbleSortLines(horizontal)
-        sorted_lines_vertical = bubbleSortLines(vertical, False, 1)
+        sorted_lines_horizontal = bubbleSortLines(horizontal, False)
+        sorted_lines_vertical = bubbleSortLines(vertical, False)
     # If a1 is in the top right
     elif a1 == 1:
-        sorted_lines_horizontal = bubbleSortLines(horizontal, False)
-        sorted_lines_vertical = bubbleSortLines(vertical, True, 1)
+        sorted_lines_horizontal = bubbleSortLines(vertical, True)
+        sorted_lines_vertical = bubbleSortLines(horizontal, False)
     # If a1 is in the bottom right
     elif a1 == 2:
         sorted_lines_horizontal = bubbleSortLines(horizontal, True)
-        sorted_lines_vertical = bubbleSortLines(vertical, True, 1)
+        sorted_lines_vertical = bubbleSortLines(vertical, True)
     # If a1 is in the bottom left
     elif a1 == 3:
-        sorted_lines_horizontal = bubbleSortLines(horizontal, True)
-        sorted_lines_vertical = bubbleSortLines(vertical, False, 1)
+        sorted_lines_horizontal = bubbleSortLines(vertical, False)
+        sorted_lines_vertical = bubbleSortLines(horizontal, True)
 
+    int_img = cropped.copy()
     intersections = []
     board = []
     for h in sorted_lines_horizontal:
@@ -725,36 +817,105 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH):
         for v in sorted_lines_vertical:
             point = line_intersection(h, v)
             intersections.append(point)
-            drawCircle(labels_img, point, (255, 0, 0), 4)
             row.append(point)
+            drawCircle(int_img, point, (0, 255, 0))
         board.append(row)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'intersections'), int_img)
 
-
-    for line in sorted_lines_horizontal:
-        drawLine(test_lines, line)
-    for line in sorted_lines_vertical:
-        drawLine(test_lines, line)
-    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'test_lines'), test_lines)
-
-    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'Yes'), labels_img)
-    test_img = cropped.copy()
+    int_map_img = cropped.copy()
     # a = 0, b = 1, c = 2, d = 3, etc
-    drawText(test_img, board[3][2], "c4")
-    drawText(test_img, board[1][0], "a2")
-    drawText(test_img, board[2][7], "h3")
-    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'test'), test_img)
+    for i in range(len(board)):
+        for j in range(len(board[i])):
+            if j == 0:
+                square = "a"
+            elif j == 1:
+                square = "b"
+            elif j == 2:
+                square = "c"
+            elif j == 3:
+                square = "d"
+            elif j == 4:
+                square = "e"
+            elif j == 5:
+                square = "f"
+            elif j == 6:
+                square = "g"
+            elif j == 7:
+                square = "h"
 
-    files.pop(0)
-    frames = []
+            square += str(i + 1)
+            drawText(int_map_img, board[j][i], square, (0, 255, 0), 45)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'intersections_mapped_' + str(a1)), int_map_img)
 
+    board_pieces = []
+    row = ['R', 'P', '-', '-', '-', '-', 'p', 'r']
+    board_pieces.append(row)
+    row = ['N', 'P', '-', '-', '-', '-', 'p', 'n']
+    board_pieces.append(row)
+    row = ['B', 'P', '-', '-', '-', '-', 'p', 'b']
+    board_pieces.append(row)
+    row = ['Q', 'P', '-', '-', '-', '-', 'p', 'q']
+    board_pieces.append(row)
+    row = ['K', 'P', '-', '-', '-', '-', 'p', 'k']
+    board_pieces.append(row)
+    row = ['B', 'P', '-', '-', '-', '-', 'p', 'b']
+    board_pieces.append(row)
+    row = ['N', 'P', '-', '-', '-', '-', 'p', 'n']
+    board_pieces.append(row)
+    row = ['R', 'P', '-', '-', '-', '-', 'p', 'r']
+    board_pieces.append(row)
+
+    int_piece_img = cropped.copy()
+    # a = 0, b = 1, c = 2, d = 3, etc
+    for i in range(len(board)):
+        for j in range(len(board[i])):
+            drawText(int_piece_img, board[j][i], board_pieces[j][i], (0, 255, 100), 45)
+    cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'intersections_piece_' + str(a1)), int_piece_img)
+
+    states = []
+    FEN = convertToFEN(board_pieces)
+    print(FEN)
+    states.append({"order": 0, "state": FEN})
+    counter = 1
+    previous = board_pieces
     for file in files:
         path = VIDEO_PATH + file
         image = cv2.imread(path)
-        frames.append(beyondFirstFrame(doCrop(image, rectangle), inputs, sess, category_index, image_tensor, board))
+        for i in range(rotato):
+            image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+        cropped = doCrop(image, rectangle)
+        im_height, width, channels = cropped.shape
+        image_expanded = np.expand_dims(cropped, axis=0)
+        (boxes, scores, classes, num) = sess.run(
+            inputs,
+            feed_dict={image_tensor: image_expanded})
+
+        boxes, classes, scores = doFilter(cropped, 1, boxes, classes, scores)
+        middles = getMiddles(width, im_height, boxes)
+        diction = compareAgainstBoard(middles, board)
+        mapping = convertToBoardMapping(diction)
+        mapping = compareAgainstPreviousState(mapping, previous)
+        labels_img = cropped.copy()
+        for i in range(len(board)):
+            for j in range(len(board[i])):
+                piece = mapping[j][i]
+                color = (240, 240, 240)
+                if piece.isupper():
+                    color = (15, 15, 15)
+                if piece is not '-':
+                    drawText(labels_img, board[j][i], piece, color, 50)
+        cv2.imwrite("{}/{}.jpg".format(OUT_PATH, str(counter)), labels_img)
+        previous = mapping
+        FEN = convertToFEN(mapping)
+        print(FEN)
+        states.append({"order": counter, 'state': FEN})
+        counter += 1
+
     end = time.time()
     print("It took {} seconds to process this video".format(end - start))
 
 
-# beginVideoProcessing("../Data/Images/Dataset/ByPiece/20190313_112101.jpg", "./static/net/output")
+sequence = "sequence2/"
 
-beginVideoProcessing("./static/net/input/sequence/", "./static/net/output/sequence")
+for i in range(1):
+    beginVideoProcessing("./static/net/input/" + sequence, "./static/net/output/" + sequence + str(i) + '/', i)
