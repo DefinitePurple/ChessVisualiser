@@ -1,8 +1,4 @@
-/Frames
-/Photos
-/Videos
 /venv
-/Data
 /instance
 *.zip
 .idea
