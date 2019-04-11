@@ -75,7 +75,6 @@ def upload():
 
                 data = {
                     "path": userDir,
-                    "host": request.host_url,
                     "white": request.form['white'],
                     "black": request.form['black'],
                     "score": request.form['score'],
@@ -110,3 +109,9 @@ def upload():
                 flash(u'Video has been uploaded. You will be emailed when the processing has completed', 'error')
 
         return render_template('match/upload.html')
+
+
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]

@@ -17,8 +17,6 @@ create table Match(
   black character varying,
   score character varying,
   moves character varying,
-  file character varying,
-  url character varying,
   date character varying
 );
 

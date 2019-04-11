@@ -6,10 +6,8 @@ def initMatch(data):
     now = datetime.datetime.now()
     date = "{}-{}-{}".format(now.day, now.month, now.year)
 
-    match = Match(file=data['path'],
-                  white=data['white'],
+    match = Match(white=data['white'],
                   black=data['black'],
-                  url=data['host'],
                   score=data['score'],
                   user_id=data['userId'],
                   date=date)

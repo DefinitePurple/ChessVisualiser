@@ -31,8 +31,6 @@ class Match(Base):
     black = Column(String)
     score = Column(String)
     moves = Column(String)
-    url = Column(String)
-    file = Column(String)
     date = Column(String)
 
     def __repr__(self):
