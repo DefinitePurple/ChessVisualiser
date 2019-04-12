@@ -7,7 +7,7 @@ Windows Support Only <br />
 Use other distros at your own risk <br />
 
 ## Install & running instructions for training the neural network
-Clone this repo anywhere `git clone https://github.com/DefinitePurple/ChessVisualiser.git` <br /?
+Clone this repo anywhere `git clone https://github.com/DefinitePurple/ChessVisualiser.git` <br />
 Clone COCOAPI to same directory `git clone https://github.com/cocodataset/cocoapi` <br />
 Install Anaconda Python 3.7 for Windows - https://www.anaconda.com/distribution/ <br />
 Once installed run `conda create -n chess pip python=3.6` <br />
