@@ -4,8 +4,6 @@
 .idea
 __pycache__/
 *.py[cod]
-Neural\ Network/images/test/*
-Neural\ Network/images/train/*
 ChessVisualiser/static/users/*
 ChessVisualiser/static/net/output/*
 ChessVisualiser/static/net/input/*

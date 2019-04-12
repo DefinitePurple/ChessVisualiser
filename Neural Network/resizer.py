@@ -1,7 +1,6 @@
 # Use to resize the dataset from original size to 0.3 of its size
 # Useful because image straight from phone could be, for example, 2k x 4k pixels
-# Which is waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay too large and means itd take ages to train our model
-# However, will try it on the large set later ;)
+# Which is way too large and means itd take ages to train our model
 
 import cv2
 import os
