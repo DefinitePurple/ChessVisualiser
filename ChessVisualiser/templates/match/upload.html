@@ -12,15 +12,35 @@
 
 {% block content %}
   <div id="upload-container" class="container-fluid  mt-4 d-flex justify-content-center">
-    <div class="card" style="width: 35rem;">
-      <div class="p-2">
-        <div id="board1" style="width: 100%;"></div>
-      </div>
+    <div class="card" style="width: 40rem;">
       <div class="card-body">
         <form class="custom-file" action="{{ url_for('match.upload') }}" method="post" enctype="multipart/form-data">
-          <input type="file" class="custom-file-input" name="match" id="customFile">
-          <label class="custom-file-label" for="customFile">Choose file</label>
-          <input type="submit" value="Upload" class="btn btn-dark mt-2"></input>
+          <div class="form-group row ">
+            <label class="custom-file-label" for="customFile">Choose file</label>
+            <input type="file" class="custom-file-input" name="match" id="customFile">
+          </div>
+          <div class="form-group row">
+            <label class="col-sm-2 col-form-label" for="white">White</label>
+            <div class="col-sm-7">
+              <input type="text" class="form-control" id="white" name="white" placeholder="White's name" required>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label class="col-sm-2 col-form-label" for="black">Black</label>
+            <div class="col-sm-7">
+              <input type="text" class="form-control" id="black" name="black" placeholder="Black's name" required>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label class="col-sm-2 col-form-label" for="score">Score</label>
+            <div class="col-sm-7">
+              <input type="text" class="form-control" id="score" name="score" placeholder="Score eg: 1-0, 0-1, or 1-1" required>
+            </div>
+          </div>
+          <div class="form-group row">
+            <div class="col-sm-1"></div>
+            <input type="submit" value="Upload" class="btn btn-dark">
+          </div>
         </form>
         <hr>
         <ul class="card-text"><b>Instructions</b>

@@ -1,0 +1,8 @@
+Hi {username},
+
+We have received your video and will update you when it is ready.
+Thank you for your patience.
+
+Regards,
+The ChessVisualiser Team
+www.chessvisualiser.com

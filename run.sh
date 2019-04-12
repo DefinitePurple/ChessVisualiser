@@ -1,3 +1,0 @@
-export FLASK_APP=ChessVisualiser
-export FLASK_ENV=development
-flask run

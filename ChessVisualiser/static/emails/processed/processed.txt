@@ -1,0 +1,7 @@
+Hi {username},
+
+Your video has been processed and you can now view it in your history.
+
+Regards,
+The ChessVisualiser Team
+www.chessvisualiser.com

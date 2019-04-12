@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, request
 
 
 def create_app(test_config=None):
@@ -24,12 +24,15 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    from . import db
-    db.init_app(app)
+    from .db_setup import cleanup
+    app.teardown_appcontext(cleanup)
+
     from . import auth
     app.register_blueprint(auth.bp, url_prefix='/auth/')
+
     from . import match
     app.register_blueprint(match.bp, url_prefix='/match/')
+
     from . import site
     app.register_blueprint(site.bp)
     app.add_url_rule('/', endpoint='index')

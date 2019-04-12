@@ -1,9 +1,11 @@
-/Frames
-/Photos
-/Videos
 /venv
 /instance
 *.zip
 .idea
 __pycache__/
 *.py[cod]
+ChessVisualiser/static/users/*
+ChessVisualiser/static/net/output/*
+ChessVisualiser/static/net/input/*
+ChessVisualiser/static/test/*
+Demo/static/net/output/
