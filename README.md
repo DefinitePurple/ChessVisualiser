@@ -17,19 +17,22 @@ Install rest of modules `pip install -r requirements.txt` <br />
 If you encounter a missing module `pip install [module name]` <br />
 Make a directory called tensorflow in C: drive `C:\tensorflow` <br />
 Clone Tensorflow Object Detection API to C:\chess `git clone https://github.com/tensorflow/models.git` <br />
-run `set PYTHONPATH=C:\tensorflow\models;C:\tensorflow\models\research;D:\tensorflow\models\research\slim` <br />
-The above command will have to be run everytime you run `conda activate` <br />
+run `set PYTHONPATH=C:\tensorflow\models;C:\tensorflow\models\research;C:\tensorflow\models\research\slim` <br />
+The above command will have to be run everytime you run `conda activate` <br /> <br />
 CD into the COCOAPI directory <br />
-Copy make.bat and setup.py from this repo "Neural Network/cocoapi" into cocoapi/PythonApi <br />
-run make.bat in cocopAPI/PythonApi <br />
-run `cp -r pycocotools C:\tensorflow\models\research` <br />
-cd to tensorflow/models/research <br />
+Copy make.bat and setup.py from this repo Neural Network/cocoapi into cocoapi/PythonApi <br />
+run make.bat in cocoapi/PythonApi <br />
+run `cp -r cocoapi\PythonApi\pycocotools C:\tensorflow\models\research` <br />
+cd to c:tensorflow/models/research <br />
 run `protoc object_detection/protos/*.proto --python_out=.` <br />
 run `python setup.py build` <br />
 run `python setup.py install` <br />
 
-copy xml_to_csv.py, generate_tfrecord.py, train.py, training in Neural Network to C:\tensorflow\models\research\object_detection <br />
-copy images from Data to C:\tensorflow\models\research\object_detection <br />
+copy xml_to_csv.py in Neural Network to C:\tensorflow\models\research\object_detection <br />
+copy generate_tfrecord.py in Neural Network to C:\tensorflow\models\research\object_detection <br />
+copy train.py in Neural Network to C:\tensorflow\models\research\object_detection <br />
+copy training\ in Neural Network to C:\tensorflow\models\research\object_detection <br />
+copy images\ from Data to C:\tensorflow\models\research\object_detection <br /> <br />
 From C:\tensorflow\models\research\object_detection <br />
 run xml_to_csv.py <br />
 run `python generate_tfrecord.py --csv_input=images\train_labels.csv --image_dir=images\train --output_path=train.record
