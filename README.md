@@ -66,6 +66,23 @@ If you encounter a missing module 'pip install [module name]'
 To run the server, cd into this repos root and run 'run.bat'
 ```
 
+## Installing & running instructions for Demo
+``` bash
+Clone this repo anywhere 'git clone https://github.com/DefinitePurple/ChessVisualiser.git'
+Clone COCOAPI to same directory 'git clone https://github.com/cocodataset/cocoapi'
+
+Install Anaconda Python 3.7 for Windows - https://www.anaconda.com/distribution/
+Once installed run 'conda create -n chess pip python=3.6'
+To activate the environment 'conda activate chess'
+
+Install tensorflow GPU 'pip install --ignore-installed --upgrade tensorflow-gpu==1.12.0'
+Install rest of modules 'pip install -r requirements.txt'
+If you encounter a missing module 'pip install [module name]'
+
+cd into Demo
+python multiImageDemo.py
+```
+
 ## File Ownership
 Each directory has their own README with an explaination of file ownership <br />
 ChessVisualiser/README.md <br />
