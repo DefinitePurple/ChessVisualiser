@@ -2,17 +2,14 @@
 The webserver prototype was created under the guidance of Flask's own tutorial
 http://flask.pocoo.org/docs/1.0/tutorial/
 
+## Demo
+`New demo Video coming soon`
+
 ## Operating system
 Windows Support Only <br />
 Use other distros at your own risk <br />
 
 ## Install & running instructions for training the neural network
-<br />
- <br />
- <br />
- <br />
-
-
 ``` bash
 Clone this repo anywhere 'git clone https://github.com/DefinitePurple/ChessVisualiser.git'
 Clone COCOAPI to same directory 'git clone https://github.com/cocodataset/cocoapi'
@@ -51,30 +48,28 @@ python generate_tfrecord.py --csv_input=images\train_labels.csv --image_dir=imag
 python generate_tfrecord.py --csv_input=images\test_labels.csv --image_dir=images\test --output_path=test.record
 python train.py --logtostderr --train_dir=training/ --pipeline_config_path=training/faster_rcnn_resnet101_coco.config
 
-To view graphs run 'tensorboard logdir=training/
+To view graphs run 'tensorboard logdir=training/'
 
 When training is complete run following command, where XXXX is the ckpt number in training/ 
-python export_inference_graph.py --input_type image_tensor --pipeline_config_path training/faster_rcnn_resnet101_coco.config --trained_checkpoint_prefix training/model.ckpt-XXXX --output_directory inference_graph
+'python export_inference_graph.py --input_type image_tensor --pipeline_config_path training/faster_rcnn_resnet101_coco.config --trained_checkpoint_prefix training/model.ckpt-XXXX --output_directory inference_graph'
 frozen_inference_graph.pb in C:/tensorflow/models/research/object_detection/inference_graph is the file used with detection
 ```
 
-
 ## Install & running instructions for webserver
-Clone this repo anywhere `git clone https://github.com/DefinitePurple/ChessVisualiser.git`
-Clone COCOAPI to same directory `git clone https://github.com/cocodataset/cocoapi`
-Install Anaconda Python 3.7 for Windows - https://www.anaconda.com/distribution/ <br />
-Once installed run `conda create -n chess pip python=3.6` <br />
-To activate the environment `conda activate chess` <br />
-Install tensorflow GPU `pip install --ignore-installed --upgrade tensorflow-gpu==1.12.0` <br />
-Install rest of modules `pip install -r requirements.txt` <br />
-If you encounter a missing module `pip install [module name]` <br />
+``` bash
+Clone this repo anywhere 'git clone https://github.com/DefinitePurple/ChessVisualiser.git'
+Clone COCOAPI to same directory 'git clone https://github.com/cocodataset/cocoapi'
 
-To run the server, cd into this repos root and run `run.bat` <br />
+Install Anaconda Python 3.7 for Windows - https://www.anaconda.com/distribution/
+Once installed run 'conda create -n chess pip python=3.6'
+To activate the environment 'conda activate chess'
 
+Install tensorflow GPU 'pip install --ignore-installed --upgrade tensorflow-gpu==1.12.0'
+Install rest of modules 'pip install -r requirements.txt'
+If you encounter a missing module 'pip install [module name]'
 
-## Demo
-`New demo Video coming soon`
-
+To run the server, cd into this repos root and run 'run.bat'
+```
 
 
 ## How to use
