@@ -13,17 +13,9 @@ from ChessVisualiser.utils import label_map_util
 from ChessVisualiser.utils import visualization_utils as vis_util
 
 """
-def doCrop(_frame, rectangle):
-def checkPointInRec(topLeft, bottomRight, point):
-def getMiddles(im_width, im_height, boxes):
-def getMiddle(im_width, im_height, box):
-def doFilter(cropped, threshold, boxes, classes, scores):
-def distance(p1, p2=(0, 0)):
-def getCorners(im_width, im_height, boxes):
-def drawCircle(img, point, radius=5, color=(255, 0, 0)):
-def drawLine(img, line, color=(255, 0, 0)):
-def getOrientation(img, corners):
+More comprehensive code and comments in Demo/multiImageDemo.py
 
+multiImageDemo.py is the file that gets worked on before being transitioned into here
 """
 
 
@@ -393,12 +385,13 @@ def beginVideoProcessing(PATH, user):
             cropped = doCrop(frame, rectangle)
 
             image_expanded = np.expand_dims(cropped, axis=0)
-            # Perform the actual detection by running the model with the image as input
 
+            # Perform the actual detection by running the model with the image as input
             (boxes, scores, classes, num) = sess.run(
                 [detection_boxes, detection_scores, detection_classes, num_detections],
                 feed_dict={image_tensor: image_expanded})
 
+            # Filter the detections
             boxes, classes, scores = doFilter(cropped, 20, boxes, classes, scores)
 
             # Draw the results of the detection (aka 'visulaize the results')
@@ -413,7 +406,7 @@ def beginVideoProcessing(PATH, user):
                 min_score_thresh=0.01,
                 max_boxes_to_draw=50)
 
-            for i in range(int(10)):
+            for i in range(5):
                 video.write(cropped)
 
         else:
@@ -426,6 +419,7 @@ def beginVideoProcessing(PATH, user):
             # If the current frame is final frame, stop
             break
 
+        # if we did read the frame get the next frame where next frame is current + spacing
         if flag:
             next_frame = pos_frame + frame_spacing
             if next_frame > cap.get(cv2.CAP_PROP_FRAME_COUNT):
