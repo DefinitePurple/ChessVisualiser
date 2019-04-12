@@ -5,9 +5,8 @@ http://flask.pocoo.org/docs/1.0/tutorial/
 ## Demo
 `New demo Video coming soon`
 
-## Operating system
-Windows Support Only <br />
-Use other distros at your own risk <br />
+## Windows Support Only
+## Use other operating systems at your own risk
 
 ## Install & running instructions for training the neural network
 ``` bash
