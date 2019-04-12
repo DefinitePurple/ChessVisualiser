@@ -1,7 +1,7 @@
 import os
 import threading
 
-from flask import (Blueprint, g, render_template, request, flash, redirect, url_for, send_from_directory)
+from flask import (Blueprint, g, render_template, request, flash, redirect, url_for, send_file )
 
 import ChessVisualiser.db_match as match_db
 import ChessVisualiser.service_match as match_service
@@ -39,7 +39,7 @@ def download():
     path = os.path.join(path, mid)
     check = os.path.join(path, 'processed.mp4')
     if os.path.exists(check):
-        return send_from_directory(path, filename='processed.mp4', mimetype='video/mp4', as_attachment=True)
+        return send_file(check, mimetype='video/mp4', as_attachment=True)
 
     flash('Images could not be found')
     return redirect(url_for('match.history'))

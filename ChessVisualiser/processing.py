@@ -8,53 +8,78 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-import ChessVisualiser.email_handler as emailer
 # Import utilites
 from ChessVisualiser.utils import label_map_util
 from ChessVisualiser.utils import visualization_utils as vis_util
 
+"""
+def doCrop(_frame, rectangle):
+def checkPointInRec(topLeft, bottomRight, point):
+def getMiddles(im_width, im_height, boxes):
+def getMiddle(im_width, im_height, box):
+def doFilter(cropped, threshold, boxes, classes, scores):
+def distance(p1, p2=(0, 0)):
+def getCorners(im_width, im_height, boxes):
+def drawCircle(img, point, radius=5, color=(255, 0, 0)):
+def drawLine(img, line, color=(255, 0, 0)):
+def getOrientation(img, corners):
 
-def getContours(img):
-    _, cnt, _ = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-    return cnt
+"""
 
 
 def crop(_frame):
+    """
+    Find the rectangle used for cropping
+
+    Convert image the grayscale
+    Convert image to black and white by applying a threshold
+    Morph the image using an OPEN algorithm https://docs.opencv.org/trunk/d9/d61/tutorial_py_morphological_ops.html
+    Get all the contours
+    Get the contour with the max area (The board)
+
+    :param _frame:
+    :return rectangle:
+    """
+
     gray = cv2.cvtColor(_frame, cv2.COLOR_BGR2GRAY)
 
     binary = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 27, 5)
     kernel = np.ones((5, 5), np.uint8)
 
     binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
-    contours = getContours(binary)
+    _, contours, _ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     contour = max(contours, key=cv2.contourArea)
     return cv2.boundingRect(contour)
 
 
 def doCrop(_frame, rectangle):
-    boundary = 50
-    # Set the corners
-    height, width, channel = _frame.shape
-    topLeftX = rectangle[0] - boundary
-    topLeftY = rectangle[1] - boundary
-    bottomRightX = rectangle[0] + rectangle[2] + boundary
-    bottomRightY = rectangle[1] + rectangle[3] + boundary
+    """
+    Crops an image using a rectangle
 
-    if topLeftX < 0:
-        topLeftX = 0
+    :param _frame:
+    :param rectangle:
+    :return image:
+    """
+    height, width, _ = _frame.shape
 
-    if topLeftY < 0:
-        topLeftY = 0
+    boundary = math.ceil((width * 0.01 + height * 0.01) / 2)
 
-    if bottomRightX > width:
-        bottomRightX = width
+    left = rectangle[0] - boundary
+    top = rectangle[1] - boundary
+    right = rectangle[0] + rectangle[2] + boundary
+    bottom = rectangle[1] + rectangle[3] + boundary
 
-    if bottomRightY > height:
-        bottomRightY = height
+    if left < 0:
+        left = 0
+    if top < 0:
+        top = 0
+    if right > width:
+        right = width
+    if bottom > height:
+        bottom = height
 
-    topLeft = (topLeftX, topLeftY)
-    bottomRight = (bottomRightX, bottomRightY)
+    topLeft = (left, top)
+    bottomRight = (right, bottom)
 
     # Crop around the rectangle
     cropped = _frame[topLeft[1]: bottomRight[1], topLeft[0]: bottomRight[0]].copy()
@@ -62,35 +87,46 @@ def doCrop(_frame, rectangle):
 
 
 def checkPointInRec(topLeft, bottomRight, point):
+    """ Checks if point is inside a box"""
     if topLeft[0] < point[0] < bottomRight[0] and topLeft[1] < point[1] < bottomRight[1]:
         return True
     return False
 
 
-def getMiddles(im_width, im_height, boxes):
+def getMiddles(width, height, boxes):
+    """ Get all middle points of all boxes in the image"""
     midpoints = []
     for box in boxes:
         ymin, xmin, ymax, xmax = box
-        midpoint = (int((xmin * im_width + xmax * im_width) / 2), int((ymin * im_height + ymax * im_height) / 2))
+        midpoint = (int((xmin * width + xmax * width) / 2), int((ymin * height + ymax * height) / 2))
         midpoints.append(midpoint)
-        # cv2.circle(cropped, midpoint, 10, (0, 0, 255), -1)
-
     return midpoints
 
 
-def getMiddle(im_width, im_height, box):
+def getMiddle(width, height, box):
+    """ Get middle point of a box in the image """
     ymin, xmin, ymax, xmax = box
-    midpoint = (int((xmin * im_width + xmax * im_width) / 2), int((ymin * im_height + ymax * im_height) / 2))
+    midpoint = (int((xmin * width + xmax * width) / 2), int((ymin * height + ymax * height) / 2))
     return midpoint
 
 
 def doFilter(cropped, threshold, boxes, classes, scores):
-    # Filter out all detections with a score less than the threshold
-    # And find multiple detections on the same piece, take the highest, remove the rest
+    """
+    Filter out all detections with a score less than the threshold
+    And find multiple detections on the same piece, take the highest, remove the rest
+
+    :param cropped:
+    :param threshold:
+    :param boxes:
+    :param classes:
+    :param scores:
+    :return:
+    """
+
     squeezed_boxes = np.squeeze(boxes)
     squeezed_scores = np.squeeze(scores)
     squeezed_classes = np.squeeze(classes).astype(np.int32)
-    im_width, im_height, channel = cropped.shape
+    height, width, _ = cropped.shape
 
     # Find everything with a score of over the threshold
     for i in range(len(squeezed_scores)):
@@ -104,7 +140,7 @@ def doFilter(cropped, threshold, boxes, classes, scores):
     squeezed_classes = squeezed_classes[:keep]
 
     # Find the center of every bounding box
-    midpoints = getMiddles(im_width, im_height, squeezed_boxes)
+    midpoints = getMiddles(width, height, squeezed_boxes)
 
     # Find all the pieces that have a center inside another bounding box
     # Check if its score is less that the other ones
@@ -113,7 +149,7 @@ def doFilter(cropped, threshold, boxes, classes, scores):
     for i in range(len(squeezed_boxes)):
         box = squeezed_boxes[i]
         ymin, xmin, ymax, xmax = box
-        (left, right, top, bottom) = (xmin * im_width, xmax * im_width, ymin * im_height, ymax * im_height)
+        (left, right, top, bottom) = (xmin * width, xmax * width, ymin * height, ymax * height)
         for j in range(len(midpoints)):
             if i is not j:
                 point = midpoints[j]
@@ -139,24 +175,38 @@ def doFilter(cropped, threshold, boxes, classes, scores):
 
 
 def distance(p1, p2=(0, 0)):
+    """
+    Point Distance
+    :param p1:
+    :param p2:
+    :return Float:
+    """
     return math.sqrt(((p1[0] - p2[0]) ** 2) + ((p1[1] - p2[1]) ** 2))
 
 
-def getCorners(im_width, im_height, boxes):
+def getCorners(width, height, boxes):
+    """
+    Finds the points closest to each corner
+
+    :param width:
+    :param height:
+    :param boxes:
+    :return list of points:
+    """
     topLeftP = (0, 0)
-    topRightP = (im_width, 0)
-    botRightP = (im_width, im_height)
-    botLeftP = (0, im_height)
+    topRightP = (width, 0)
+    botRightP = (width, height)
+    botLeftP = (0, height)
 
     # (Position in array, distance from respective points)
-    topLeftClosest = (-1, im_height * 10)
-    topRightClosest = (-1, im_height * 10)
-    botRightClosest = (-1, im_height * 10)
-    botLeftClosest = (-1, im_height * 10)
+    topLeftClosest = (-1, height * 10)
+    topRightClosest = (-1, height * 10)
+    botRightClosest = (-1, height * 10)
+    botLeftClosest = (-1, height * 10)
 
     for i in range(len(boxes)):
         box = boxes[i]
-        midpoint = getMiddle(im_width, im_height, box)
+        midpoint = getMiddle(width, height, box)
         if distance(midpoint, topLeftP) < topLeftClosest[1]:
             topLeftClosest = (i, distance(midpoint, topLeftP))
 
@@ -172,7 +222,12 @@ def getCorners(im_width, im_height, boxes):
     return [topLeftClosest[0], topRightClosest[0], botRightClosest[0], botLeftClosest[0]]
 
 
-def drawCircle(img, point, radius=5, color=(255, 0, 0)):
+"""
+VISUALISATION UTILITIESS
+"""
+
+
+def drawCircle(img, point, color=(255, 0, 0), radius=5):
     x = point[0]
     y = point[1]
     image_pil = Image.fromarray(np.uint8(img)).convert('RGB')
@@ -181,23 +236,77 @@ def drawCircle(img, point, radius=5, color=(255, 0, 0)):
     np.copyto(img, np.array(image_pil))
 
 
-def drawLine(img, line, color=(255, 0, 0)):
+def drawLine(img, line, color=(255, 0, 0), size=3):
     image_pil = Image.fromarray(np.uint8(img)).convert('RGB')
     draw = ImageDraw.Draw(image_pil)
-    draw.line(line, color, 3)
+    draw.line(line, color, size)
     np.copyto(img, np.array(image_pil))
 
 
-def getOrientation(img, corners):
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+"""
+END OF VISUALISATION UTILITIES
+"""
+
+
+def getAvgLuminance(img, boxes):
+    """
+    Take the middle of all detected objects, get the average luminance of all these pieces
+    Luminance formula is
+        Y = 0.2126 * Red + 0.7152 * Green + 0.0722 * Blue
+
+    :param img:
+    :param boxes:
+    :return the average luminance of all pieces in the image:
+    """
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    avg_luminance = 0
+    counter = 0
+    height, width, _ = rgb.shape
+    for mid in getMiddles(width, height, boxes):
+        midY = int(mid[1])
+        midX = int(mid[0])
+        pixel = list(rgb[midY - 1:midY, midX - 1: midX][0][0])
+        avg_luminance += 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2]
+        counter += 1
+    avg_luminance /= counter
+
+    return avg_luminance
+
+
+def getPieceColor(img, current, avg_luminance):
+    """
+    Computes the color of a piece by getting the luminance. A dark object has low luminance.
+    If the pieces luminance is below the avg_luminance of all pieces in the image, it is black
+
+    :param img:
+    :param current:
+    :param avg_luminance:
+    :return piece color, 1 white, 0 black:
+    """
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    curY = int(current[1])
+    curX = int(current[0])
+    pixel = list(rgb[curY - 1:curY, curX - 1: curX][0][0])
+    cur_luminance = 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2]
+    return 1 if cur_luminance >= avg_luminance else 0
+
+
+def getOrientation(img, corners, boxes):
+    """
+    Get the luminance / color of each piece and figure out the board orientation from it
+    If there is a black piece in the top left, and black piece in top right, orientation is [0, 0, 1, 1]
+
+    :param img:
+    :param corners:
+    :param boxes:
+    :return list of 1's and 0's where 1 is white, 0 is black:
+    """
+    avg_luminance = getAvgLuminance(img, boxes)
     orientation = []
     for corner in corners:
-        pixel = gray[corner[1] - 1:corner[1], corner[0] - 1: corner[0]][0]
-        dist = 255 - pixel
-        if dist < pixel:
-            orientation.append(1)
-        else:
-            orientation.append(0)
+        color = getPieceColor(img, corner, avg_luminance)
+        orientation.append(color)
+
     return orientation
 
 
@@ -328,4 +437,3 @@ def beginVideoProcessing(PATH, user):
     video.release()
     end = time.time()
     print("It took {} seconds to process this video".format(end - start))
-    emailer.sendEmail('processed', user['email'], {'username': user['username']})
