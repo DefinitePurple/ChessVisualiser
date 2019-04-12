@@ -13,26 +13,39 @@ from utils import label_map_util
 from utils import visualization_utils
 
 
-def getContours(img):
-    _, cnt, _ = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    if len(cnt) <= 0:
-        exit()
-    return cnt
-
-
 def crop(_frame):
+    """
+    Find the rectangle used for cropping
+
+    Convert image the grayscale
+    Convert image to black and white by applying a threshold
+    Morph the image using an OPEN algorithm https://docs.opencv.org/trunk/d9/d61/tutorial_py_morphological_ops.html
+    Get all the contours
+    Get the contour with the max area (The board)
+
+    :param _frame:
+    :return rectangle:
+    """
+
     gray = cv2.cvtColor(_frame, cv2.COLOR_BGR2GRAY)
 
     binary = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 27, 5)
     kernel = np.ones((5, 5), np.uint8)
 
     binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
-    contours = getContours(binary)
+    _, contours, _ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     contour = max(contours, key=cv2.contourArea)
     return cv2.boundingRect(contour)
 
 
 def doCrop(_frame, rectangle):
+    """
+    Crops an image using a rectangle
+
+    :param _frame:
+    :param rectangle:
+    :return image:
+    """
     height, width, _ = _frame.shape
 
     boundary = math.ceil((width * 0.01 + height * 0.01) / 2)
@@ -60,31 +73,43 @@ def doCrop(_frame, rectangle):
 
 
 def checkPointInRec(topLeft, bottomRight, point):
+    """ Checks if point is inside a box"""
     if topLeft[0] < point[0] < bottomRight[0] and topLeft[1] < point[1] < bottomRight[1]:
         return True
     return False
 
 
 def getMiddles(width, height, boxes):
+    """ Get all middle points of all boxes in the image"""
     midpoints = []
     for box in boxes:
         ymin, xmin, ymax, xmax = box
         midpoint = (int((xmin * width + xmax * width) / 2), int((ymin * height + ymax * height) / 2))
         midpoints.append(midpoint)
-        # cv2.circle(cropped, midpoint, 10, (0, 0, 255), -1)
-
     return midpoints
 
 
 def getMiddle(width, height, box):
+    """ Get middle point of a box in the image """
     ymin, xmin, ymax, xmax = box
     midpoint = (int((xmin * width + xmax * width) / 2), int((ymin * height + ymax * height) / 2))
     return midpoint
 
 
 def doFilter(cropped, threshold, boxes, classes, scores):
-    # Filter out all detections with a score less than the threshold
-    # And find multiple detections on the same piece, take the highest, remove the rest
+    """
+    Filter out all detections with a score less than the threshold
+    And find multiple detections on the same piece, take the highest, remove the rest
+
+    :param cropped:
+    :param threshold:
+    :param boxes:
+    :param classes:
+    :param scores:
+    :return:
+    """
+
+
     squeezed_boxes = np.squeeze(boxes)
     squeezed_scores = np.squeeze(scores)
     squeezed_classes = np.squeeze(classes).astype(np.int32)
@@ -137,10 +162,24 @@ def doFilter(cropped, threshold, boxes, classes, scores):
 
 
 def distance(p1, p2=(0, 0)):
+    """
+    Point Distance
+    :param p1:
+    :param p2:
+    :return Float:
+    """
     return math.sqrt(((p1[0] - p2[0]) ** 2) + ((p1[1] - p2[1]) ** 2))
 
 
 def getCorners(width, height, boxes):
+    """
+    Finds the points closest to each corner
+
+    :param width:
+    :param height:
+    :param boxes:
+    :return list of points:
+    """
     topLeftP = (0, 0)
     topRightP = (width, 0)
     botRightP = (width, height)
@@ -169,7 +208,9 @@ def getCorners(width, height, boxes):
 
     return [topLeftClosest[0], topRightClosest[0], botRightClosest[0], botLeftClosest[0]]
 
-
+"""
+VISUALISATION UTILITIESS
+"""
 def drawText(img, point, message, fill=(0, 0, 0), size=40):
     image_pil = Image.fromarray(np.uint8(img)).convert('RGB')
     d = ImageDraw.Draw(image_pil)
@@ -192,9 +233,18 @@ def drawLine(img, line, color=(255, 0, 0), size=3):
     draw = ImageDraw.Draw(image_pil)
     draw.line(line, color, size)
     np.copyto(img, np.array(image_pil))
-
+"""
+END OF VISUALISATION UTILITIES
+"""
 
 def perpDistFromLine(line, point):
+    """
+    Finds the perpindicular distance of a point from a line
+
+    :param line:
+    :param point:
+    :return Float:
+    """
     b = point
     a = line[0]
     c = line[1]
@@ -215,6 +265,16 @@ def perpDistFromLine(line, point):
 
 
 def bubbleSort(list, midpoints, reverse=False, axis=0):
+    """
+    Sort points in a list
+    axis states if they are to be sorted by their x or y axis
+
+    :param list:
+    :param midpoints:
+    :param reverse:
+    :param axis:
+    :return:
+    """
     for passnum in range(len(list) - 1, 0, -1):
         for i in range(passnum):
             p1 = midpoints[list[i]][axis]
@@ -231,6 +291,13 @@ def bubbleSort(list, midpoints, reverse=False, axis=0):
 
 
 def bubbleSortLines(list, reverse=False):
+    """
+    Sort lines by their middle points
+
+    :param list:
+    :param reverse:
+    :return Sorted List:
+    """
     for passnum in range(len(list) - 1, 0, -1):
         for i in range(passnum):
             line1 = list[i]
@@ -250,11 +317,24 @@ def bubbleSortLines(list, reverse=False):
 
 
 def lineMid(line):
+    """
+    Calculate the middle point of a line
+
+    :param line:
+    :return Point:
+    """
     mid = ((line[0][0] + line[1][1]) / 2, (line[1][0] + line[1][0]) / 2)
     return mid
 
 
 def line_intersection(line1, line2):
+    """
+    Calculate the intersection point of two lines
+
+    :param line1:
+    :param line2:
+    :return Point:
+    """
     xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
     ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1])
 
@@ -272,6 +352,12 @@ def line_intersection(line1, line2):
 
 
 def horizontalOrVertical(orientation):
+    """
+    Figure out if the board is vertical or horizontal.
+
+    :param orientation:
+    :return Integer:
+    """
     if orientation == [1, 0, 0, 1] or orientation == [0, 1, 1, 0]:
         return 0  # Vertical
     elif orientation == [0, 0, 1, 1] or orientation == [1, 1, 0, 0]:
@@ -280,9 +366,14 @@ def horizontalOrVertical(orientation):
         return -1  # Error
 
 
-# Returns position in corners_mids array of which corner is 'a1'
-# Starts clockwise from top left
 def whereIsA1(orientation):
+    """
+    Returns position in corners_mids array of which corner is 'a1'
+    Starts clockwise from top left
+
+    :param orientation:
+    :return Integer notating where a1 is:
+    """
     if orientation == [1, 0, 0, 1]:
         return 0  # Top Left
     elif orientation == [1, 1, 0, 0]:
@@ -296,6 +387,15 @@ def whereIsA1(orientation):
 
 
 def getAvgLuminance(img, boxes):
+    """
+    Take the middle of all detected objects, get the average luminance of all these pieces
+    Luminance formula is
+        Y = 0.2126 * Red + 0.7152 * Green + 0.0722 * Blue
+
+    :param img:
+    :param boxes:
+    :return the average luminance of all pieces in the image:
+    """
     rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     avg_luminance = 0
     counter = 0
@@ -312,6 +412,15 @@ def getAvgLuminance(img, boxes):
 
 
 def getPieceColor(img, current, avg_luminance):
+    """
+    Computes the color of a piece by getting the luminance. A dark object has low luminance.
+    If the pieces luminance is below the avg_luminance of all pieces in the image, it is black
+
+    :param img:
+    :param current:
+    :param avg_luminance:
+    :return piece color, 1 white, 0 black:
+    """
     rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     curY = int(current[1])
     curX = int(current[0])
@@ -321,6 +430,15 @@ def getPieceColor(img, current, avg_luminance):
 
 
 def getOrientation(img, corners, boxes):
+    """
+    Get the luminance / color of each piece and figure out the board orientation from it
+    If there is a black piece in the top left, and black piece in top right, orientation is [0, 0, 1, 1]
+
+    :param img:
+    :param corners:
+    :param boxes:
+    :return list of 1's and 0's where 1 is white, 0 is black:
+    """
     avg_luminance = getAvgLuminance(img, boxes)
     orientation = []
     for corner in corners:
@@ -330,9 +448,14 @@ def getOrientation(img, corners, boxes):
     return orientation
 
 
-# ONLY USED WHEN READING IN THE IMAGE SEQUENES
-# Sort a list of files by their name
 def sortFiles(files, reverse=False):
+    """
+    ONLY USED WHEN READING IN THE IMAGE SEQUENES
+    Sort a list of files by their name
+    :param files:
+    :param reverse:
+    :return:
+    """
     for passnum in range(len(files) - 1, 0, -1):
         for i in range(passnum):
             p1 = files[i].split('.')[0]
@@ -350,9 +473,14 @@ def sortFiles(files, reverse=False):
     return files
 
 
-# Outputs a multidimensional array that mimics the board state and where pieces are but not what pieces are
-# ? indicates a piece, - indicates an empty square
 def convertToBoardMapping(diction):
+    """
+    Maps the results of compareAgainstBoard to a multidimensionalArray
+
+    :param diction:
+    :return a multidimensional array where ? notates pieces and - notates empty squares:
+    """
+
     temp = []
     for i in range(8):
         row = []
@@ -365,9 +493,15 @@ def convertToBoardMapping(diction):
     return temp
 
 
-# Finds the square each piece mid point is closest to
-# Returns a list of array coordinates where the coordinates map back to a position in the board array
 def compareAgainstBoard(middles, board):
+    """
+    Finds the intersection point (square) each piece mid point is closest to
+
+    :param middles:
+    :param board:
+    :return list of array coordinates where the coordinates map back to a position in the board array:
+    """
+
     diction = []
     for i in range(len(middles)):
         mid = middles[i]
@@ -384,10 +518,16 @@ def compareAgainstBoard(middles, board):
     return diction
 
 
-# Receives the current board state acquired from convertToBoardMapping and the previous board state
-# This will keep track of piece movement. Converts '?' into actual pieces
-# The first 'previous' state will be the starting position which already tells us what pieces are
 def compareAgainstPreviousState(current, previous):
+    """
+    Receives the current board state acquired from convertToBoardMapping and the previous board state
+    This will keep track of piece movement. Converts '?' into actual pieces
+    The first 'previous' state will be the starting position which already tells us what pieces are
+
+    :param current:
+    :param previous:
+    :return board state with pieces:
+    """
     move = (0, 0)
     for i in range(len(current)):
         for j in range(len(current[i])):
@@ -414,6 +554,13 @@ def compareAgainstPreviousState(current, previous):
 
 
 def convertToFEN(state):
+    """
+    To convert the board state to a string, we just need to iterate through each 'rank' in the array
+    and append it to a string
+
+    :param state:
+    :return FEN:
+    """
     FEN = ""
     for i in range(len(state) - 1, -1, -1):
         counter = 0
@@ -694,6 +841,7 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, rotato):
         counter += 2
     avg_line_distance /= counter
     # Scale the average line distance to .9 of its size
+    # # TODO FUTURE WORK
     # # TODO Figure out how to do this in respect to the image distortion and positions from the center of the camera
     # # TODO More than likely not in the scope of the final year project
     avg_line_distance *= 0.9
@@ -809,6 +957,10 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, rotato):
         sorted_lines_horizontal = bubbleSortLines(vertical, False)
         sorted_lines_vertical = bubbleSortLines(horizontal, True)
 
+    # Iterate through the lines
+    # Get the intersection points
+    # append it to a list of intersections
+    # append it to a row which will be appended to another array to create a multidimensional array
     int_img = cropped.copy()
     intersections = []
     board = []
@@ -822,6 +974,7 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, rotato):
         board.append(row)
     cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'intersections'), int_img)
 
+    # Display chess coordinates (a1, b2, c7, etc) on an image
     int_map_img = cropped.copy()
     # a = 0, b = 1, c = 2, d = 3, etc
     for i in range(len(board)):
@@ -847,6 +1000,19 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, rotato):
             drawText(int_map_img, board[j][i], square, (0, 255, 0), 45)
     cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'intersections_mapped_' + str(a1)), int_map_img)
 
+
+    """
+    PIECE MAPPINGS
+    
+    Create the first multidimensional array that holds the initial starting position of the game
+    Read in the next image
+    Crop it
+    Detect the pieces
+    Filter the pieces
+    Find where the pieces are in relation to the intersection points
+    Find what pieces are by taking the previous step and comparing it against the previous board state
+    Convert the new board state to a FEN string
+    """
     board_pieces = []
     row = ['R', 'P', '-', '-', '-', '-', 'p', 'r']
     board_pieces.append(row)
@@ -866,35 +1032,49 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, rotato):
     board_pieces.append(row)
 
     int_piece_img = cropped.copy()
-    # a = 0, b = 1, c = 2, d = 3, etc
     for i in range(len(board)):
         for j in range(len(board[i])):
             drawText(int_piece_img, board[j][i], board_pieces[j][i], (0, 255, 100), 45)
     cv2.imwrite("{}/{}.jpg".format(OUT_PATH, 'intersections_piece_' + str(a1)), int_piece_img)
 
     states = []
+    # Convert the board state into a FEN string format
     FEN = convertToFEN(board_pieces)
     print(FEN)
+    # Append the FEN to a list of FEN strings and specify what order in the list it should be.
+    """ This list would be what is inserted into the database """
     states.append({"order": 0, "state": FEN})
     counter = 1
     previous = board_pieces
+    # Iterate through each image that is in the list of files. The first image has already been removed above.
     for file in files:
         path = VIDEO_PATH + file
         image = cv2.imread(path)
+        # Rotate image rotato times
         for i in range(rotato):
             image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+        # Crop the image with the rectangle from the first frame
         cropped = doCrop(image, rectangle)
         im_height, width, channels = cropped.shape
         image_expanded = np.expand_dims(cropped, axis=0)
+
+        # Run the detection on the image
         (boxes, scores, classes, num) = sess.run(
             inputs,
             feed_dict={image_tensor: image_expanded})
 
+        # Filter the detections
         boxes, classes, scores = doFilter(cropped, 1, boxes, classes, scores)
+        # Get all the middle points of the detections
         middles = getMiddles(width, im_height, boxes)
+        # Find where the detections are in relation to the intersection points acquired earlier
         diction = compareAgainstBoard(middles, board)
+        # Convert the above comparison to a multidimensional array where pieces are ? and empty squares are -
         mapping = convertToBoardMapping(diction)
+        # Compare the above mapping to the previous board state mapping
+        # Figure out what each piece is
         mapping = compareAgainstPreviousState(mapping, previous)
+        # Print the pieces onto an image
         labels_img = cropped.copy()
         for i in range(len(board)):
             for j in range(len(board[i])):
@@ -905,9 +1085,12 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, rotato):
                 if piece is not '-':
                     drawText(labels_img, board[j][i], piece, color, 50)
         cv2.imwrite("{}/{}.jpg".format(OUT_PATH, str(counter)), labels_img)
+        # Set the previous equal to the mapping so we know what the new previous board state is
         previous = mapping
+        # Convert the mapping to a fen string
         FEN = convertToFEN(mapping)
         print(FEN)
+        # Append the FEN string to the list
         states.append({"order": counter, 'state': FEN})
         counter += 1
 
@@ -915,7 +1098,13 @@ def beginVideoProcessing(VIDEO_PATH, OUT_PATH, rotato):
     print("It took {} seconds to process this video".format(end - start))
 
 
-sequence = "sequence2/"
+# Source folder of the sequence, should be located in Demo/static/net/input
+sequence = "sequence1/"
 
+# Theres a for loop here to demonstrate with different orientations of the board.
+# i will be passed into the function which tells the algorithm to rotate the image i times
+# i = 0, rotate 0 times
+# i = 1, rotate the image once
+# etc
 for i in range(1):
     beginVideoProcessing("./static/net/input/" + sequence, "./static/net/output/" + sequence + str(i) + '/', i)
