@@ -66,7 +66,7 @@ If you encounter a missing module 'pip install [module name]'
 To run the server, cd into this repos root and run 'run.bat'
 ```
 
-## File Ownership - ([Path to file] - [Owner])
+## File Ownership
 Each directory has their own README with an explaination of file ownership <br />
 ChessVisualiser/README.md <br />
 Data/README.md <br />
