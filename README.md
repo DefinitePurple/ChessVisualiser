@@ -7,25 +7,29 @@ Windows Support Only <br />
 Use other distros at your own risk <br />
 
 ## Install & running instructions for training the neural network
-Clone this repo anywhere `git clone https://github.com/DefinitePurple/ChessVisualiser.git` <br />
-Clone COCOAPI to same directory `git clone https://github.com/cocodataset/cocoapi` <br />
-Install Anaconda Python 3.7 for Windows - https://www.anaconda.com/distribution/ <br />
-Once installed run `conda create -n chess pip python=3.6` <br />
-To activate the environment `conda activate chess` <br />
-Install tensorflow GPU `pip install --ignore-installed --upgrade tensorflow-gpu==1.12.0` <br />
-Install rest of modules `pip install -r requirements.txt` <br />
-If you encounter a missing module `pip install [module name]` <br />
-Make a directory called tensorflow in C: drive `C:\tensorflow` <br />
-Clone Tensorflow Object Detection API to C:\chess `git clone https://github.com/tensorflow/models.git` <br />
-run ``` bash set PYTHONPATH=C:\tensorflow\models;C:\tensorflow\models\research;C:\tensorflow\models\research\slim``` <br />
-The above command will have to be run everytime you run `conda activate` <br /> <br />
-CD into the COCOAPI directory <br />
-Copy make.bat and setup.py from this repo Neural Network/cocoapi into cocoapi/PythonApi <br />
-run make.bat in cocoapi/PythonApi <br />
-run ``` bash cp -r cocoapi\PythonApi\pycocotools C:\tensorflow\models\research``` <br />
-cd to c:tensorflow/models/research <br />
-run <br />
+<br />
+ <br />
+ <br />
+ <br />
+
+
 ``` bash
+Clone this repo anywhere 'git clone https://github.com/DefinitePurple/ChessVisualiser.git' <br />
+Clone COCOAPI to same directory 'git clone https://github.com/cocodataset/cocoapi' <br />
+Install Anaconda Python 3.7 for Windows - https://www.anaconda.com/distribution/ <br />
+Once installed run 'conda create -n chess pip python=3.6' <br />
+To activate the environment 'conda activate chess' <br />
+Install tensorflow GPU 'pip install --ignore-installed --upgrade tensorflow-gpu==1.12.0'
+Install rest of modules 'pip install -r requirements.txt`'
+If you encounter a missing module 'pip install [module name]'
+Make a directory called tensorflow in C: drive 'C:\tensorflow'
+Clone Tensorflow Object Detection API to C:\chess - git clone https://github.com/tensorflow/models.git
+set PYTHONPATH=C:\tensorflow\models;C:\tensorflow\models\research;C:\tensorflow\models\research\slim
+The above command will have to be run everytime you run 'conda activate'
+Copy make.bat and setup.py from this repo Neural Network/cocoapi into cocoapi/PythonApi
+run make.bat in cocoapi/PythonApi
+cp -r cocoapi\PythonApi\pycocotools C:\tensorflow\models\research
+cd to C:tensorflow/models/research
 protoc object_detection/protos/*.proto --python_out=.
 python setup.py build
 python setup.py install
