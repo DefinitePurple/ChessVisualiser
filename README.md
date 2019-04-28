@@ -1,6 +1,6 @@
 # Chess Visualiser
 ## Demo
-`New demo Video coming soon`
+https://www.youtube.com/watch?v=UibvMQHDLIA&feature=youtu.be
 
 ## Windows Support Only - Use other operating systems at your own risk
 
