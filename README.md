@@ -37,6 +37,9 @@ copy train.py in Neural Network to C:\tensorflow\models\research\object_detectio
 copy training\ in Neural Network to C:\tensorflow\models\research\object_detection
 copy images\ from Data to C:\tensorflow\models\research\object_detection
 
+In C:\tensorflow\models\research\object_detection\training\faster_rcnn_resnet101_coco.config change all instances of paths to the relative paths on your pc
+Example: Change D:/ChessVisualiser/models/research/object_detection/training/labelmap.pbtxt to C:/tensorflow/models/research/object_detection/training/labelmap.pbtxt
+
 From C:\tensorflow\models\research\object_detection
 python xml_to_csv.py
 python generate_tfrecord.py --csv_input=images\train_labels.csv --image_dir=images\train --output_path=train.record
